@@ -5,6 +5,17 @@ Quick reference for every sponsor's tooling: what it does, your credits, prize t
 **Submission link:** https://sublet--saurabhskhire.replit.app/
 **Discord:** https://discord.gg/krCsZxYRGW
 
+## Tool capability comparison
+
+| | Docs | CLI | SDK | MCP | RAG |
+|---|---|---|---|---|---|
+| **InsForge** | ✅ | ✅ | ✅ | ✅ | ✅ native |
+| **You.com** | ✅ | — | ✅ Python/TypeScript | ✅ | ✅ strong |
+| **Nebius** | ✅ | ✅ | ⚠️ OpenAI-compatible | ✅ beta | ✅ via Token Factory |
+| **Replit** | ✅ | ✅ | ⚠️ limited | ✅ client/host | ❌ build it yourself |
+| **Trae** | ✅ | ✅ Trae-Agent | ❌ | ✅ strong | ⚠️ via MCP |
+| **FinChip** | ⚠️ limited | ✅ | ❌ | ⚠️ declared | N/A |
+
 ---
 
 ## 🏆 Prize-eligible sponsors
@@ -29,6 +40,7 @@ What it is: all-in-one backend (database, auth, storage, AI gateway, hosting) bu
 - **Agent Skills (lighter than MCP):** `npx skills add insforge/insforge-skills`
 - **RAG:** native pgvector + embeddings + AI gateway — good for "upload docs → ask questions" builds in any track.
 - **Good fit for:** Sports Arena (live data + auth), Potion Lab (user profiles/matching), any track needing fast backend.
+- **More resources:** [main site](https://insforge.dev/), [MCP setup](https://docs.insforge.dev/mcp-setup), [GitHub](https://github.com/InsForge/InsForge), [MCP server](https://github.com/InsForge/insforge-mcp), [installer](https://github.com/InsForge/insforge-install), [`@insforge/mcp`](https://www.npmjs.com/package/@insforge/mcp), [Skills + CLI announcement](https://insforge.dev/blog/insforge-skills-cli)
 
 ---
 
@@ -50,6 +62,7 @@ What it is: Search, Contents, and Research APIs — real-time, citation-backed w
 - **Key param for RAG:** `livecrawl` — returns full-page Markdown alongside search results in one call (no separate scrape step)
 - **Framework integrations:** `langchain-youdotcom`, LlamaIndex retriever, LangGraph tools
 - **Good fit for:** Creative Expressions (research-grounded story/content gen), Potion Lab (recommendation engines), any "agent that needs current info" build.
+- **More resources:** [quickstart](https://you.com/docs/welcome), [MCP guide](https://docs.you.com/developer-resources/mcp-server), [integrations](https://you.com/docs/integrations-overview), [developer overview](https://docs.you.com/developer-resources/overview), [private RAG example](https://you.com/docs/examples/private-rag)
 
 ---
 
@@ -70,6 +83,7 @@ What it is: GPU cloud + "Token Factory" — OpenAI-compatible inference API for 
 - **MCP (beta):** `nebius/mcp-server` on GitHub — lets agents run CLI commands + fetch docs. ⚠️ Never use "Allow always" on the execute tool.
 - **RAG:** embedding models (BGE, E5-mistral) + pgvector; `langchain-nebius` package gives you `ChatNebius`, `NebiusEmbeddings`, `NebiusRetriever` in one import.
 - **Good fit for:** cheaper/faster inference than your usual Bedrock calls if you're burning through tokens fast during the sprint.
+- **More resources:** [CLI docs](https://docs.nebius.com/cli), [AI Studio](https://nebius.com/ai-studio), [RAG solutions](https://nebius.com/solutions/rag), [MCP server](https://github.com/nebius/mcp-server), [Cloud API](https://github.com/nebius/api), [`langchain-nebius`](https://pypi.org/project/langchain-nebius/), [LangChain integration](https://docs.langchain.com/oss/python/integrations/embeddings/nebius)
 
 ### Replit — Build & deploy environment
 **Credits:** $25 per participant
@@ -80,6 +94,7 @@ What it is: browser-based IDE + hosting. This is also where you **submit** your 
 - **MCP:** Replit Agent acts as an MCP *client* — connect external MCP servers (Stripe, Linear, etc.) via the Integrations pane, OAuth handled automatically.
 - **No real SDK** — it's a hosting/build environment, not an API product.
 - **Good fit for:** fast deploy + demo hosting regardless of track — useful as your "ship it" layer even if you build elsewhere.
+- **More resources:** [MCP tutorial](https://docs.replit.com/tutorials/mcp-in-3), [CLUI docs](https://docs.replit.com/references/workspace-tools/clui-graphical-cli), [`replit-py`](https://replit-py.readthedocs.io/en/latest/cli.html), [`replit` npm package](https://www.npmjs.com/package/replit), [`repl-cli`](https://pypi.org/project/repl-cli/)
 
 ### Trae — AI-powered IDE (ByteDance)
 **Credits:** 7-day free Pro plan + $20 in credits
@@ -91,6 +106,7 @@ What it is: VS Code-based AI-first IDE with an MCP marketplace and agentic Build
 - **MCP:** built-in marketplace, one-click installs (e.g., Context7 for live SDK docs — handy if you're using an unfamiliar library mid-hack)
 - **InsForge integration:** first-party — install InsForge directly from Trae's MCP marketplace
 - **Good fit for:** your actual coding environment for the day if you want AI pair-programming with MCP tools wired in already.
+- **More resources:** [setup](https://docs.trae.ai/ide/set-up-trae?_lang=en), [MCP overview](https://docs.trae.ai/ide/model-context-protocol), [adding MCP servers](https://docs.trae.ai/ide/add-mcp-servers), [models](https://docs.trae.ai/ide/models), [marketplace](https://solo.trae.ai/marketplace)
 
 ---
 
@@ -102,6 +118,7 @@ Not an infra/API sponsor in the usual sense — it's a Web3 marketplace where AI
 - **Site:** https://finchip.ai
 - **CLI:** `finchip-cli` (npm) — mint, trade, acquire skill tokens; handles x402/USDC payments
 - Likely only relevant if your project leans into the "agent economy / agents owning tools" angle — probably overkill for most tracks in a one-day sprint.
+- **More resources:** [marketplace](https://finchip.ai/top), [A2A entry point](https://finchip.ai/a2aentry), [CLI source](https://github.com/Sleipnirs/finchip-cli), [`finchip-cli`](https://www.npmjs.com/package/finchip-cli)
 
 ---
 

@@ -94,7 +94,7 @@ Games, playful products, or gamified real-world experiences.
 
 100K+ in total credits/tools across the sponsor ecosystem.
 
-(See `sponsor-tools.md` for setup details — docs, CLI, SDK, MCP, RAG — on each platform.)
+(See `sponsors.md` for setup details — docs, CLI, SDK, MCP, RAG — on each platform.)
 
 ---
 
@@ -127,7 +127,7 @@ Games, playful products, or gamified real-world experiences.
 - [ ] Join Discord, find/confirm party (team)
 - [ ] Pick a track
 - [ ] Claim sponsor credits (Nebius, Replit, Trae, You.com)
-- [ ] Decide tool stack (see `sponsor-tools.md`)
+- [ ] Decide tool stack (see `sponsors.md`)
 - [ ] Build 11:00 AM – 5:00 PM
 - [ ] Submit before 5:00 PM cutoff → https://sublet--saurabhskhire.replit.app/
 - [ ] Prep demo for 6:00–7:00 PM finalist round (if selected)
