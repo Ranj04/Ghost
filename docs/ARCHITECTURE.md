@@ -20,28 +20,31 @@ flowchart TD
     rel --> met[Joint metrics - elbow, knee, wrist, guide hand, release height]
     met --> align[Reference alignment - scale-normalize + temporal align on release]
     align --> flaw[Flaw detection - rank gaps vs reference]
+
     flaw --> coach[Coaching layer]
     coach --> you[You.com - retrieve the drill]
     coach --> tav[Tavily - fetch cited sources]
-    flaw --> persist[InsForge - persist session + progress]
-    coach --> persist
+    you --> gen[Nebius Token Factory - generate grounded coaching note]
+    tav --> gen
+    gen --> persist[InsForge - persist session + progress]
+    flaw --> persist
     persist --> results[Results view + ghost skeleton overlay]
 
-    %% Side branch: player-vs-player stake
-    flaw -. score .-> pvp[Kite PvP - settle testnet stake on higher score]
+    %% Side branch: player-vs-player score battle (local, no chain)
+    flaw -. score .-> pvp[PvP form battle - compare two scores]
     pvp -. result .-> persist
 
-    %% Infra / submission rails
-    deploy[Nebius - hosting] -.-> results
-    finchip[FinChip - submission packaging] -.-> persist
+    %% Deploy rail
+    deploy[Kite AI / Replit - deploy + host] -.-> results
 ```
 
-The spine is fully client-side through flaw detection. Only the coaching fetch
-(You.com + Tavily) and persistence (InsForge) cross the network, and the drill
-fetch is cached. The Kite PvP stake is a side branch off the score — the core
-coaching product never depends on it.
+The spine is fully client-side through flaw detection. Only the coaching step
+(You.com retrieval, Tavily sources, Nebius generation) and persistence (InsForge)
+cross the network, and the drill fetch is cached. The PvP form battle is a side
+branch off the score — a local comparison of two players' scores, with no core
+dependency on it.
 
-## 3. Data lifecycle
+## 3. Data flow
 
 A capture's life, end to end:
 
@@ -55,35 +58,36 @@ A capture's life, end to end:
    `Flaw[]`, picks the `topFlaw`, computes a `score`, and attaches the aligned
    `ghostRef` pose to overlay. Output is an `AnalysisResult`.
 3. **Coaching — `Flaw → CoachingResult`.** `coachFlaw(topFlaw)` retrieves a
-   targeted drill (You.com) and citations (Tavily), returning a `CoachingResult`.
+   targeted drill (You.com) and citations (Tavily), then has Nebius Token Factory
+   write a short coaching note grounded *only* in what was retrieved. Returns a
+   `CoachingResult`.
 4. **Persistence.** The `AnalysisResult` (score, topFlaw, metrics) plus the
    `CoachingResult` are written to InsForge under the authenticated user, so the
    results/ghost-overlay view can render them and progress can be tracked across
    sessions.
-5. **Optional settlement.** In a PvP match, two users' `score`s are compared and
-   a small testnet stake is settled through Kite; the outcome is persisted back
-   to InsForge.
+5. **Optional PvP.** In a form battle, two users' `score`s are compared directly
+   and the outcome is persisted back to InsForge. No on-chain settlement — it's a
+   skill-based score comparison for the demo.
 
 The contract types are the only shapes that cross the A/B boundary, so either
 half can be rebuilt independently as long as it honors `contracts.ts`.
 
 ## 4. Sponsor integrations
 
+These are the tools Ghost actually integrates against, with honest layers.
+
 | Tool | Layer | What it does here | Why the product is worse without it |
 |------|-------|-------------------|-------------------------------------|
-| **You.com** | Product | Retrieves the targeted drill for the detected `topFlaw` — the specific corrective exercise, not generic tips. | Without it, feedback stops at "your elbow flares" with no fix. The drill is the actionable half of coaching; You.com is what turns a diagnosis into a thing you can go practice. |
-| **Tavily** | Product | Searches and returns citation sources behind each drill (coaching articles, breakdowns) for the references list. | Without it, drills are unsourced assertions a user has no reason to trust. Citations are the credibility layer — they let a skeptical player verify the advice isn't hallucinated. |
+| **You.com** | Product | Retrieves the targeted drill for the detected `topFlaw` — the specific corrective exercise, with citations, not generic tips. | Without it, feedback stops at "your elbow flares" with no fix. The drill is the actionable half of coaching; You.com turns a diagnosis into something you can go practice. |
+| **Tavily** | Product | Searches and returns the supporting technique/biomechanics sources behind each drill for the references list. | Without it, drills are unsourced assertions a user has no reason to trust. Citations are the credibility layer — they let a skeptical player verify the advice isn't hallucinated. |
+| **Nebius (Token Factory)** | Product | OpenAI-compatible inference that writes the personalized coaching note from the retrieved sources + the user's real metrics. Retrieval finds the facts; Nebius writes them up. | Without it, we'd either show raw search results or hand-template the note. Nebius is what makes the coaching read like a coach talking, while staying grounded in retrieved facts. |
 | **InsForge** | Infra | Auth + persistence: user accounts, stored sessions, and cross-session progress. | Without it, every shot is a throwaway. No accounts, no history, no progress arc — Ghost becomes a one-off toy instead of something you return to and improve with. |
-| **Nebius** | Infra | Hosting/deployment target for the app. | Without it, there's nowhere reliable to run the demo; we'd be on a laptop tunnel. Nebius is what makes the live URL real and shareable for judging. |
-| **Kite** | Product (optional) | Settles the player-vs-player "form battle" — the higher score wins a small testnet stake on-chain. | Without it, the PvP mode is just a scoreboard with no stakes. Kite makes the battle have consequence, which is the entire point of betting on your form. |
-| **FinChip** | Submission | Packages the project artifacts/metadata for hackathon submission. | Without it, submission is manual and error-prone under time pressure; FinChip standardizes what we hand the judges so nothing required is missing. |
-| **Trae** | Dev | AI-assisted IDE used to build Ghost across two parallel branches. | Without it, the two-person parallel build is slower and the frozen-contract discipline is harder to hold; Trae is the velocity multiplier that made a one-day split-build feasible. |
-| **Growing Pines** | Dev / Program | Hackathon program + support context the build runs within. | Without it, there's no venue, mentorship, or sponsor access that this project is built against; it's the frame that makes the whole integration surface available in the first place. |
+| **Trae** | Dev | AI-assisted IDE used to build Ghost as a two-person parallel build against frozen contracts. | Without it, the parallel split-build is slower and the contract discipline is harder to hold; Trae is the velocity multiplier that made a one-day two-person build feasible. |
 
-Layers are honest: You.com, Tavily, and Kite touch the product surface a user
-feels; InsForge and Nebius are infrastructure; Trae and Growing Pines are
-dev/program; FinChip is submission plumbing. We are not pretending a hosting
-provider is a product feature.
+**Not integration tools, acknowledged honestly:**
+- **Kite AI / Replit** — build & deploy environment for the live demo URL. A
+  hosting rail, not a product feature.
+- **Growing Pines** — event sponsor of the hackathon, not a tool Ghost calls.
 
 ## 5. Key design decisions & tradeoffs
 
@@ -102,22 +106,29 @@ provider is a product feature.
   "dip too shallow." Directional feedback is robust to the exact thing 2D pose is
   bad at, and it's also how a human coach actually talks.
 - **Reference alignment removes body-size and timing confounds.** Before
-  comparing a user's pose to the ghost, keypoints are scale-normalized (by body
-  segment length) and the sequences are temporally aligned on the detected
-  release frame. So the visible "gap" reflects *form*, not the fact that the user
-  is taller than the reference or shot a beat earlier.
+  comparing a user's pose to the ghost, keypoints are scale-normalized (by torso
+  length) and the sequences are temporally aligned on the detected release frame.
+  So the visible "gap" reflects *form*, not the fact that the user is taller than
+  the reference or shot a beat earlier.
+- **Retrieval-grounded coaching.** The Nebius-written note is constrained to what
+  You.com and Tavily actually returned. If a claim isn't in the retrieved
+  sources, it doesn't go in the note — that's the guardrail against confident
+  hallucinated advice.
 - **Client-side inference for demo reliability.** Pose runs in the browser, so
-  the core experience works without conference wifi. Only the drill fetch is
+  the core experience works without conference wifi. Only the coaching fetch is
   networked, and it's cached. A demo that doesn't depend on the venue's network
   is a demo that doesn't die on stage.
 
 ## 6. What we deliberately cut
 
-- **Real-time multiplayer beyond the single PvP stake.** One async form battle,
-  settled once. No lobbies, no live head-to-head.
+- **On-chain stakes for PvP.** The form battle is a local, skill-based score
+  comparison persisted in InsForge — no testnet wallet, no chain settlement. It
+  was scope we didn't need to prove the idea.
+- **Real-time multiplayer.** One async form battle, compared once. No lobbies, no
+  live head-to-head.
 - **Multi-sport.** Basketball jump shot only. The analysis layer is shot-specific
   on purpose.
 - **Mobile-native apps.** Browser-only. No iOS/Android builds.
-- **Absolute biomechanical scoring.** Covered above — we chose directional
-  feedback over false-precision degrees, and we're not shipping a "your form is
-  87/100 vs the NBA average" claim we can't stand behind.
+- **Absolute biomechanical scoring.** Covered above — directional feedback over
+  false-precision degrees, no "your form is 87/100 vs the NBA average" claim we
+  can't stand behind.
