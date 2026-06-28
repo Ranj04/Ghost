@@ -1,2 +1,11 @@
-// Stub barrel — owned by PERSON B (works on main). See OWNERSHIP.md.
-export {};
+export {
+  getPersistenceMode,
+  isInsForgeConfigured,
+  loadSessions,
+  saveSession,
+} from "./sessions";
+export {
+  GhostSessionSchema,
+  type GhostSession,
+  type PersistenceMode,
+} from "./types";

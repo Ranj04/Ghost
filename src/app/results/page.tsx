@@ -5,6 +5,8 @@ import {
   mockShotCapture,
 } from "@/lib/__mocks__/analyzeShot";
 
+import { SaveSessionButton } from "./save-session-button";
+
 export default async function ResultsPage() {
   const analysis = await analyzeShot(mockShotCapture);
   const coaching = await coachFlaw(analysis.topFlaw);
@@ -17,7 +19,13 @@ export default async function ResultsPage() {
           Your shot, decoded.
         </h1>
       </div>
-      <ResultsView analysis={analysis} coaching={coaching} />
+      <ResultsView
+        analysis={analysis}
+        coaching={coaching}
+        saveAction={
+          <SaveSessionButton analysis={analysis} coaching={coaching} />
+        }
+      />
     </main>
   );
 }

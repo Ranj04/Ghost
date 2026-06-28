@@ -25,6 +25,7 @@ export interface ResultsViewProps {
   analysis: AnalysisResult;
   coaching: CoachingResult;
   ghostOverlay?: ReactNode;
+  saveAction?: ReactNode;
 }
 
 const severityLabel = {
@@ -37,6 +38,7 @@ export function ResultsView({
   analysis,
   coaching,
   ghostOverlay,
+  saveAction,
 }: ResultsViewProps) {
   const { topFlaw } = analysis;
 
@@ -168,14 +170,16 @@ export function ResultsView({
         >
           Try another shot
         </Link>
-        <Link
-          className={cn(buttonVariants(), "h-11 bg-[#101513] px-5 text-white")}
-          href="/history"
-        >
-          <Check className="size-4" />
-          Save &amp; view progress
-          <ChevronRight className="size-4" />
-        </Link>
+        {saveAction ?? (
+          <Link
+            className={cn(buttonVariants(), "h-11 bg-[#101513] px-5 text-white")}
+            href="/history"
+          >
+            <Check className="size-4" />
+            Save &amp; view progress
+            <ChevronRight className="size-4" />
+          </Link>
+        )}
       </div>
     </div>
   );

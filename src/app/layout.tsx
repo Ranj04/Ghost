@@ -47,6 +47,12 @@ export default function RootLayout({
                 >
                   History
                 </Link>
+                <Link
+                  href="/auth"
+                  className="ml-1 rounded-full bg-[#101513] px-3.5 py-2 text-white transition hover:bg-[#26302c]"
+                >
+                  Sign in
+                </Link>
               </nav>
             </div>
           </header>
