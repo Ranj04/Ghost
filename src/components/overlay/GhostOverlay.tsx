@@ -36,9 +36,10 @@ const SPEED = 0.85;
 
 /** Linear-interpolate two pose frames (by landmark name) for smooth motion. */
 function lerpFrame(a: PoseFrame, b: PoseFrame, t: number): PoseFrame {
+  if (a === b) return a;
   const bm = new Map(b.keypoints.map((k) => [k.name, k]));
   return {
-    t: a.t,
+    t: a.t + (b.t - a.t) * t,
     keypoints: a.keypoints.map((ka) => {
       const kb = bm.get(ka.name);
       if (!kb) return ka;
@@ -53,7 +54,8 @@ export function GhostOverlay({ result, width = 440, height = 560, className, com
   const ghostFrames = result.ghostRef;
   const total = frames.length;
   const fps = Math.max(1, result.capture.fps);
-  const releaseIndex = Math.min(result.metrics.releaseFrameIndex ?? 0, total - 1);
+  const releaseIndex =
+    total > 0 ? Math.min(result.metrics.releaseFrameIndex ?? 0, total - 1) : 0;
 
   const side = useMemo(() => detectShootingSide(result.capture), [result.capture]);
   const flawJoint = useMemo(() => jointsForFlaw(result.topFlaw.metric, side)[0], [result.topFlaw.metric, side]);
@@ -77,6 +79,12 @@ export function GhostOverlay({ result, width = 440, height = 560, className, com
   useEffect(() => {
     playingRef.current = playing;
   }, [playing]);
+
+  // posRef survives effect re-runs — reset when a new capture arrives or length changes.
+  useEffect(() => {
+    posRef.current = 0;
+    setIndex(0);
+  }, [result.capture.id, total]);
 
   // Stable fit transform (centers + scales the figure) from all visible poses.
   const fit = useMemo(() => {
@@ -125,6 +133,12 @@ export function GhostOverlay({ result, width = 440, height = 560, className, com
   useEffect(() => {
     const ctx = canvasRef.current?.getContext("2d");
     if (!ctx) return;
+    if (total === 0) {
+      ctx.clearRect(0, 0, width, height);
+      drawBackdrop(ctx, width, height);
+      drawVignette(ctx, width, height);
+      return;
+    }
     const reduced = typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     let raf = 0;
     let last = performance.now();
@@ -132,10 +146,17 @@ export function GhostOverlay({ result, width = 440, height = 560, className, com
     const start = last;
     let lastIdx = -1;
 
-    const frameAt = (arr: PoseFrame[], pos: number): PoseFrame => {
-      const a = Math.floor(pos);
+    const frameAt = (arr: PoseFrame[], pos: number): PoseFrame | null => {
+      if (arr.length === 0) return null;
+      const clamped = Math.max(0, Math.min(pos, arr.length - 1));
+      const a = Math.floor(clamped);
       const b = Math.min(a + 1, arr.length - 1);
-      return lerpFrame(arr[a], arr[b], pos - a);
+      const fa = arr[a];
+      const fb = arr[b];
+      if (!fa) return fb ?? null;
+      if (!fb) return fa;
+      if (a === b) return fa;
+      return lerpFrame(fa, fb, clamped - a);
     };
 
     // Shot arc from the release point into the hoop (apex above the chord).
@@ -160,7 +181,11 @@ export function GhostOverlay({ result, width = 440, height = 560, className, com
       drawBackdrop(ctx, width, height);
       const intro = reduced ? 1 : easeOutCubic(Math.min(1, (now - start) / 600));
       const user = frameAt(frames, pos);
-      const ghost = ghostFrames.length ? frameAt(ghostFrames, Math.min(pos, ghostFrames.length - 1)) : null;
+      if (!user) {
+        drawVignette(ctx, width, height);
+        return;
+      }
+      const ghost = ghostFrames.length ? frameAt(ghostFrames, pos) : null;
 
       ctx.save();
       ctx.translate(width / 2, height / 2);
@@ -199,6 +224,9 @@ export function GhostOverlay({ result, width = 440, height = 560, className, com
       raf = requestAnimationFrame(tick);
       const dt = Math.min(100, now - last);
       last = now;
+      if (total > 0 && posRef.current > total - 1) {
+        posRef.current = total - 1;
+      }
       if (playingRef.current) {
         if (posRef.current >= total - 1) {
           holding += dt;

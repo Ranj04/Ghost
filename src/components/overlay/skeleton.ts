@@ -149,20 +149,15 @@ export function drawGhostLines(ctx: CanvasRenderingContext2D, frame: PoseFrame, 
   const map = pxMap(frame, w, h);
   const T = torsoScale(map, w, h);
   ctx.save();
-  ctx.globalAlpha = 0.5 * alpha;
+  // Faint, thin, headless echo — a reference, not a competing figure.
+  ctx.globalAlpha = 0.32 * alpha;
   ctx.lineCap = "round";
   ctx.lineJoin = "round";
   ctx.strokeStyle = GHOST;
   ctx.shadowColor = GHOST;
-  ctx.shadowBlur = 10;
-  ctx.lineWidth = Math.max(2, Math.min(4, T * 0.04));
+  ctx.shadowBlur = 6;
+  ctx.lineWidth = Math.max(1.5, Math.min(3, T * 0.03));
   strokeSkeleton(ctx, map, undefined, undefined, GHOST);
-  const nose = map.get("nose");
-  if (nose) {
-    ctx.beginPath();
-    ctx.arc(nose.x, nose.y, Math.max(8, T * 0.16), 0, Math.PI * 2);
-    ctx.stroke();
-  }
   ctx.restore();
 }
 
@@ -308,10 +303,10 @@ export function drawFlawMarker(ctx: CanvasRenderingContext2D, frame: PoseFrame, 
   ctx.save();
   ctx.strokeStyle = SIGNAL;
   ctx.shadowColor = SIGNAL;
-  ctx.shadowBlur = 10 + pulse * 8;
-  ctx.lineWidth = 2.5;
+  ctx.shadowBlur = 8 + pulse * 6;
+  ctx.lineWidth = 2;
   ctx.beginPath();
-  ctx.arc(j.x, j.y, Math.max(10, T * 0.17) * (1 + pulse * 0.12), 0, Math.PI * 2);
+  ctx.arc(j.x, j.y, Math.max(8, T * 0.11) * (1 + pulse * 0.1), 0, Math.PI * 2);
   ctx.stroke();
   ctx.restore();
 }

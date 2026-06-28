@@ -44,7 +44,7 @@ export function ResultsView({
 
   return (
     <div className="space-y-6">
-      <section className="grid gap-6 lg:grid-cols-[0.72fr_1.28fr]">
+      <section className="grid items-start gap-6 lg:grid-cols-[0.72fr_1.28fr]">
         <Card className="border-0 bg-[#101a2b] text-white ring-white/10">
           <CardHeader>
             <CardDescription className="text-white/50">
@@ -71,9 +71,13 @@ export function ResultsView({
                 </div>
               </div>
             </div>
-            <div className="mt-7 flex items-center gap-2 text-sm text-[#2e86ff]">
+            <div className="mt-6 flex items-center gap-2 text-sm text-[#2e86ff]">
               <Sparkles className="size-4" />
               Solid base. One clear focus.
+            </div>
+            <div className="mt-7 grid w-full grid-cols-2 gap-3">
+              <Metric label="Your release" value={`${topFlaw.observed}°`} />
+              <Metric label="Reference" value={`${topFlaw.reference}°`} accent />
             </div>
           </CardContent>
         </Card>
@@ -114,14 +118,6 @@ export function ResultsView({
                   </span>
                 </div>
               )}
-            </div>
-            <div className="mt-4 grid grid-cols-2 gap-3">
-              <Metric label="Your release" value={`${topFlaw.observed}°`} />
-              <Metric
-                label="Reference"
-                value={`${topFlaw.reference}°`}
-                accent
-              />
             </div>
           </CardContent>
         </Card>
