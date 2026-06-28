@@ -1,2 +1,6 @@
-// Stub barrel — owned by PERSON B (works on main). See OWNERSHIP.md.
-export {};
+export {
+  FinChipManifestSchema,
+  finChipManifest,
+  type FinChipManifest,
+} from "./manifest";
+export { createCoachFlawSkill } from "./skill";
