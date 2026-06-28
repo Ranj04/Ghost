@@ -19,7 +19,6 @@ export interface CaptureViewProps {
 }
 
 const POSE_CONNECTIONS = PoseLandmarker.POSE_CONNECTIONS as { start: number; end: number }[];
-const DEBUG_VISIBILITY = false;
 
 /** Draw the live preview skeleton — gated: only confidently-seen joints/bones. */
 function drawGatedPreview(ctx: CanvasRenderingContext2D, landmarks: NormalizedLandmark[], w: number, h: number): void {
@@ -140,10 +139,6 @@ export function CaptureView({ onCapture, className }: CaptureViewProps) {
         }
         if (landmarks) {
           drawGatedPreview(ctx, landmarks, canvas.width, canvas.height);
-          if (DEBUG_VISIBILITY) {
-            const n = landmarks.filter((p) => isVisible(p)).length;
-            console.debug(`${n}/${landmarks.length} landmarks visible`);
-          }
           if (recordingRef.current) {
             bufferRef.current.push({
               t: nowMs - recordStartRef.current,
