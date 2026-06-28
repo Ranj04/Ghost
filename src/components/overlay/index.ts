@@ -4,13 +4,14 @@ export { INK, SURFACE, BONE, GHOST, SIGNAL, MUTED } from "./palette";
 export {
   drawBackdrop,
   drawVignette,
-  drawGhostSilhouette,
-  drawPlayerSkeleton,
-  drawDeviation,
+  drawGhostLines,
+  drawPlayer,
+  drawBall,
+  drawFlawMarker,
+  torsoLengthPx,
   flawConnectionKeys,
   jointsForFlaw,
   resolvableConnections,
   POSE_CONNECTIONS_BY_NAME,
   JOINT_NAMES,
-  type Offscreen,
 } from "./skeleton";

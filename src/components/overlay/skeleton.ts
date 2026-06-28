@@ -1,10 +1,9 @@
 // Canvas drawing for the form-vs-ghost signature, keyed by landmark NAME so it
 // works for a live 33-point MediaPipe capture and the 13-name fixtures.
 //
-// Design: "motion-capture at night." The IDEAL is a luminous aqua light-figure
-// (glowing neon bones with a bright core) — reads as a hologram you chase. YOU
-// are a crisp bone-white skeleton on top. One coral deviation shows the gap to
-// the ideal. Glowing-aqua-behind / crisp-white-in-front keeps it legible.
+// Design: minimal "motion-capture at night." A faint blue IDEAL skeleton, your
+// crisp bone-white skeleton, and a basketball that arcs off the hand at release.
+// The motion (smooth auto-loop) + the ball is what reads as "a person shooting".
 import type { JointMetrics, PoseFrame } from "@/lib/contracts";
 import { isVisible } from "@/lib/vision/visibility";
 import { BONE, GHOST, GHOST_RGB, INK, SIGNAL } from "./palette";
@@ -43,13 +42,19 @@ export function jointsForFlaw(metric: keyof JointMetrics | string, side: "left" 
   }
 }
 
+export function flawConnectionKeys(joint: string): Set<string> {
+  const keys = new Set<string>();
+  for (const [a, b] of POSE_CONNECTIONS_BY_NAME) {
+    if (a === joint || b === joint) keys.add(`${a}|${b}`);
+  }
+  return keys;
+}
+
 interface PxPoint {
   x: number;
   y: number;
 }
 
-// Only VISIBLE keypoints make it into the draw map — bones/nodes to invented or
-// off-frame joints are dropped, not drawn.
 function pxMap(frame: PoseFrame, w: number, h: number): Map<string, PxPoint> {
   const m = new Map<string, PxPoint>();
   for (const k of frame.keypoints) {
@@ -73,103 +78,31 @@ function torsoScale(map: Map<string, PxPoint>, w: number, h: number): number {
   return sc && hc ? pxDist(sc, hc) : Math.min(w, h) * 0.18;
 }
 
+/** Torso length (px) for the current frame — used to size the ball/markers. */
+export function torsoLengthPx(frame: PoseFrame, w: number, h: number): number {
+  return torsoScale(pxMap(frame, w, h), w, h);
+}
+
 export function resolvableConnections(frame: PoseFrame): number {
   const map = new Map(frame.keypoints.map((k) => [k.name, k]));
   return POSE_CONNECTIONS_BY_NAME.filter(([a, b]) => map.has(a) && map.has(b)).length;
 }
 
-function disc(ctx: CanvasRenderingContext2D, p: PxPoint | undefined, r: number): void {
-  if (!p) return;
-  ctx.beginPath();
-  ctx.arc(p.x, p.y, r, 0, Math.PI * 2);
-  ctx.fill();
-}
-
-/** A tapered limb: trapezoid between two joints + a rounding disc at each end. */
-function limb(ctx: CanvasRenderingContext2D, a?: PxPoint, b?: PxPoint, ra = 6, rb = 5): void {
-  if (!a || !b) return;
-  const dx = b.x - a.x;
-  const dy = b.y - a.y;
-  const len = Math.hypot(dx, dy) || 1;
-  const nx = -dy / len;
-  const ny = dx / len;
-  ctx.beginPath();
-  ctx.moveTo(a.x + nx * ra, a.y + ny * ra);
-  ctx.lineTo(b.x + nx * rb, b.y + ny * rb);
-  ctx.lineTo(b.x - nx * rb, b.y - ny * rb);
-  ctx.lineTo(a.x - nx * ra, a.y - ny * ra);
-  ctx.closePath();
-  ctx.fill();
-  disc(ctx, a, ra);
-  disc(ctx, b, rb);
-}
-
-/** A soft rounded polygon (quadratic curves through edge midpoints). */
-function roundedPolygon(ctx: CanvasRenderingContext2D, pts: PxPoint[]): void {
-  if (pts.length < 3) return;
-  const m = (p: PxPoint, q: PxPoint) => ({ x: (p.x + q.x) / 2, y: (p.y + q.y) / 2 });
-  const startMid = m(pts[pts.length - 1], pts[0]);
-  ctx.beginPath();
-  ctx.moveTo(startMid.x, startMid.y);
-  for (let i = 0; i < pts.length; i++) {
-    const cur = pts[i];
-    const next = m(pts[i], pts[(i + 1) % pts.length]);
-    ctx.quadraticCurveTo(cur.x, cur.y, next.x, next.y);
-  }
-  ctx.closePath();
-  ctx.fill();
-}
-
-/** Fill an anatomically-proportioned body (opaque, current fillStyle) from the
- *  VISIBLE keypoints — tapered limbs + a rounded torso union into one smooth
- *  silhouette when composited once. */
-function fillBody(ctx: CanvasRenderingContext2D, frame: PoseFrame, w: number, h: number): void {
-  const map = pxMap(frame, w, h);
-  const T = torsoScale(map, w, h);
-  const P = (n: string) => map.get(n);
-  const ls = P("left_shoulder");
-  const rs = P("right_shoulder");
-  const lh = P("left_hip");
-  const rh = P("right_hip");
-
-  // Solid trunk along the spine gives the side-on torso real body mass (a thin
-  // shoulders->hips quad alone reads as a paper sliver).
-  const trunkTop = midpoint(ls, rs);
-  const trunkBot = midpoint(lh, rh);
-  if (trunkTop && trunkBot) limb(ctx, trunkTop, trunkBot, 0.18 * T, 0.16 * T);
-  if (ls && rs && rh && lh) roundedPolygon(ctx, [ls, rs, rh, lh]);
-  disc(ctx, ls, 0.12 * T);
-  disc(ctx, rs, 0.12 * T);
-  disc(ctx, lh, 0.12 * T);
-  disc(ctx, rh, 0.12 * T);
-
-  limb(ctx, ls, P("left_elbow"), 0.08 * T, 0.065 * T);
-  limb(ctx, P("left_elbow"), P("left_wrist"), 0.065 * T, 0.048 * T);
-  limb(ctx, rs, P("right_elbow"), 0.08 * T, 0.065 * T);
-  limb(ctx, P("right_elbow"), P("right_wrist"), 0.065 * T, 0.048 * T);
-  limb(ctx, lh, P("left_knee"), 0.115 * T, 0.085 * T);
-  limb(ctx, P("left_knee"), P("left_ankle"), 0.085 * T, 0.06 * T);
-  limb(ctx, rh, P("right_knee"), 0.115 * T, 0.085 * T);
-  limb(ctx, P("right_knee"), P("right_ankle"), 0.085 * T, 0.06 * T);
-
-  disc(ctx, P("left_wrist"), 0.048 * T);
-  disc(ctx, P("right_wrist"), 0.048 * T);
-  disc(ctx, P("left_ankle"), 0.055 * T);
-  disc(ctx, P("right_ankle"), 0.055 * T);
-
-  const sc = midpoint(ls, rs);
-  const nose = P("nose");
-  if (sc) {
-    const headC = nose ?? { x: sc.x, y: sc.y - 0.5 * T };
-    limb(ctx, sc, { x: headC.x, y: headC.y + 0.12 * T }, 0.055 * T, 0.06 * T);
+function strokeSkeleton(ctx: CanvasRenderingContext2D, map: Map<string, PxPoint>, flawKeys?: Set<string>, flawColor?: string, baseColor?: string): void {
+  for (const [a, b] of POSE_CONNECTIONS_BY_NAME) {
+    const pa = map.get(a);
+    const pb = map.get(b);
+    if (!pa || !pb) continue;
+    if (flawKeys?.has(`${a}|${b}`) && flawColor) ctx.strokeStyle = flawColor;
+    else if (baseColor) ctx.strokeStyle = baseColor;
     ctx.beginPath();
-    ctx.ellipse(headC.x, headC.y, T * 0.13, T * 0.16, 0, 0, Math.PI * 2);
-    ctx.fill();
+    ctx.moveTo(pa.x, pa.y);
+    ctx.lineTo(pb.x, pb.y);
+    ctx.stroke();
   }
 }
 
-/** Blue-black mocap stage: deep radial ink, a faint blueprint grid, and a blue
- *  floor glow that grounds the figure. */
+/** Dark mocap stage: blue-black radial + faint blueprint grid + blue floor glow. */
 export function drawBackdrop(ctx: CanvasRenderingContext2D, w: number, h: number): void {
   const g = ctx.createRadialGradient(w * 0.5, h * 0.4, Math.min(w, h) * 0.05, w * 0.5, h * 0.55, Math.max(w, h) * 0.85);
   g.addColorStop(0, "#0E1830");
@@ -178,11 +111,10 @@ export function drawBackdrop(ctx: CanvasRenderingContext2D, w: number, h: number
   ctx.fillStyle = g;
   ctx.fillRect(0, 0, w, h);
 
-  // Faint blueprint grid — the biomechanics-lab feel.
   ctx.save();
-  ctx.strokeStyle = `rgba(${GHOST_RGB}, 0.05)`;
+  ctx.strokeStyle = `rgba(${GHOST_RGB}, 0.045)`;
   ctx.lineWidth = 1;
-  const step = Math.max(28, Math.round(Math.min(w, h) / 13));
+  const step = Math.max(30, Math.round(Math.min(w, h) / 12));
   for (let x = step; x < w; x += step) {
     ctx.beginPath();
     ctx.moveTo(x, 0);
@@ -197,161 +129,121 @@ export function drawBackdrop(ctx: CanvasRenderingContext2D, w: number, h: number
   }
   ctx.restore();
 
-  const floor = ctx.createRadialGradient(w * 0.5, h * 0.92, 4, w * 0.5, h * 0.92, w * 0.52);
-  floor.addColorStop(0, `rgba(${GHOST_RGB}, 0.14)`);
+  const floor = ctx.createRadialGradient(w * 0.5, h * 0.93, 4, w * 0.5, h * 0.93, w * 0.5);
+  floor.addColorStop(0, `rgba(${GHOST_RGB}, 0.13)`);
   floor.addColorStop(1, `rgba(${GHOST_RGB}, 0)`);
   ctx.fillStyle = floor;
-  ctx.fillRect(0, h * 0.64, w, h * 0.36);
+  ctx.fillRect(0, h * 0.66, w, h * 0.34);
 }
 
-/** Edge vignette, drawn last. */
 export function drawVignette(ctx: CanvasRenderingContext2D, w: number, h: number): void {
-  const v = ctx.createRadialGradient(w * 0.5, h * 0.5, Math.min(w, h) * 0.4, w * 0.5, h * 0.5, Math.max(w, h) * 0.72);
-  v.addColorStop(0, "rgba(14,17,22,0)");
-  v.addColorStop(1, "rgba(14,17,22,0.5)");
+  const v = ctx.createRadialGradient(w * 0.5, h * 0.5, Math.min(w, h) * 0.42, w * 0.5, h * 0.5, Math.max(w, h) * 0.72);
+  v.addColorStop(0, "rgba(8,12,20,0)");
+  v.addColorStop(1, "rgba(8,12,20,0.55)");
   ctx.fillStyle = v;
   ctx.fillRect(0, 0, w, h);
 }
 
-export interface Offscreen {
-  canvas: HTMLCanvasElement;
-  ctx: CanvasRenderingContext2D;
+/** The IDEAL: a faint, thin blue reference skeleton behind you. `alpha` eases it in. */
+export function drawGhostLines(ctx: CanvasRenderingContext2D, frame: PoseFrame, w: number, h: number, alpha = 1): void {
+  const map = pxMap(frame, w, h);
+  const T = torsoScale(map, w, h);
+  ctx.save();
+  ctx.globalAlpha = 0.5 * alpha;
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+  ctx.strokeStyle = GHOST;
+  ctx.shadowColor = GHOST;
+  ctx.shadowBlur = 10;
+  ctx.lineWidth = Math.max(2, Math.min(4, T * 0.04));
+  strokeSkeleton(ctx, map, undefined, undefined, GHOST);
+  const nose = map.get("nose");
+  if (nose) {
+    ctx.beginPath();
+    ctx.arc(nose.x, nose.y, Math.max(8, T * 0.16), 0, Math.PI * 2);
+    ctx.stroke();
+  }
+  ctx.restore();
 }
 
-/** The IDEAL: a luminous aqua FILLED silhouette. The body is filled opaque on an
- *  offscreen buffer, then stamped once at low opacity with an outer glow — so
- *  overlapping limbs union into a smooth hologram (no seams, no tube-lines).
- *  Stamped within the caller's fit transform, so it aligns with the player.
- *  `intro` (0..1) fades it in. */
-export function drawGhostSilhouette(main: CanvasRenderingContext2D, off: Offscreen, frame: PoseFrame, w: number, h: number, intro = 1): void {
-  off.ctx.clearRect(0, 0, w, h);
-  off.ctx.fillStyle = GHOST;
-  fillBody(off.ctx, frame, w, h);
-
-  main.save();
-  // Two stamps: a soft wide glow, then a slightly crisper body — reads as a
-  // luminous hologram with presence without looking solid.
-  main.shadowColor = GHOST;
-  main.globalAlpha = 0.16 * intro;
-  main.shadowBlur = 34;
-  main.drawImage(off.canvas, 0, 0, off.canvas.width, off.canvas.height, 0, 0, w, h);
-  main.globalAlpha = 0.22 * intro;
-  main.shadowBlur = 14;
-  main.drawImage(off.canvas, 0, 0, off.canvas.width, off.canvas.height, 0, 0, w, h);
-  main.restore();
-}
-
-/** YOU: a crisp bone-white skeleton. Bones in `flawKeys` render coral. */
-export function drawPlayerSkeleton(ctx: CanvasRenderingContext2D, frame: PoseFrame, w: number, h: number, flawKeys: Set<string>): void {
+/** YOU: a crisp bone-white skeleton with joint nodes. Bones touching the flaw
+ *  joint render in orange. */
+export function drawPlayer(ctx: CanvasRenderingContext2D, frame: PoseFrame, w: number, h: number, flawKeys: Set<string>): void {
   const map = pxMap(frame, w, h);
   const T = torsoScale(map, w, h);
   const lw = Math.max(2.5, Math.min(5, T * 0.05));
-
   ctx.save();
   ctx.lineCap = "round";
   ctx.lineJoin = "round";
   ctx.lineWidth = lw;
-  for (const [a, b] of POSE_CONNECTIONS_BY_NAME) {
-    const pa = map.get(a);
-    const pb = map.get(b);
-    if (!pa || !pb) continue;
-    const isFlaw = flawKeys.has(`${a}|${b}`);
-    ctx.strokeStyle = isFlaw ? SIGNAL : BONE;
-    ctx.shadowColor = isFlaw ? SIGNAL : "rgba(0,0,0,0.5)";
-    ctx.shadowBlur = isFlaw ? 12 : 3;
-    ctx.beginPath();
-    ctx.moveTo(pa.x, pa.y);
-    ctx.lineTo(pb.x, pb.y);
-    ctx.stroke();
-  }
+  ctx.shadowColor = "rgba(0,0,0,0.5)";
+  ctx.shadowBlur = 4;
+  strokeSkeleton(ctx, map, flawKeys, SIGNAL, BONE);
+
   ctx.shadowBlur = 0;
   ctx.fillStyle = BONE;
   for (const name of JOINT_NAMES) {
     const k = map.get(name);
-    if (k) disc(ctx, k, Math.max(2.5, T * 0.028));
+    if (k) {
+      ctx.beginPath();
+      ctx.arc(k.x, k.y, Math.max(2.5, T * 0.028), 0, Math.PI * 2);
+      ctx.fill();
+    }
   }
-  const head = map.get("nose");
-  if (head) {
+  const nose = map.get("nose");
+  if (nose) {
     ctx.strokeStyle = BONE;
     ctx.lineWidth = lw;
     ctx.beginPath();
-    ctx.arc(head.x, head.y, Math.max(8, T * 0.16), 0, Math.PI * 2);
+    ctx.arc(nose.x, nose.y, Math.max(8, T * 0.16), 0, Math.PI * 2);
     ctx.stroke();
   }
   ctx.restore();
 }
 
-const CHILD_JOINT: Record<string, string> = {
-  right_shoulder: "right_elbow", left_shoulder: "left_elbow",
-  right_elbow: "right_wrist", left_elbow: "left_wrist",
-  right_wrist: "right_elbow", left_wrist: "left_elbow",
-  right_hip: "right_knee", left_hip: "left_knee",
-  right_knee: "right_ankle", left_knee: "left_ankle",
-};
+/** A clean basketball: warm sphere + a couple of seam lines. (x,y,r in px.) */
+export function drawBall(ctx: CanvasRenderingContext2D, x: number, y: number, r: number): void {
+  ctx.save();
+  ctx.translate(x, y);
+  const g = ctx.createRadialGradient(-r * 0.32, -r * 0.32, r * 0.18, 0, 0, r);
+  g.addColorStop(0, "#FBDCAE");
+  g.addColorStop(1, "#E07A2C");
+  ctx.shadowColor = "rgba(0,0,0,0.45)";
+  ctx.shadowBlur = r * 0.7;
+  ctx.fillStyle = g;
+  ctx.beginPath();
+  ctx.arc(0, 0, r, 0, Math.PI * 2);
+  ctx.fill();
 
-/** The single deviation: coral marker on your flawed joint, a thin dashed
- *  connector to where the ideal joint sits, and a small arc showing the angular
- *  gap between your bone and the ideal bone. One flaw only — no clutter. */
-export function drawDeviation(ctx: CanvasRenderingContext2D, userFrame: PoseFrame, ghostFrame: PoseFrame, w: number, h: number, joint: string, pulse: number): void {
-  const um = pxMap(userFrame, w, h);
-  const gm = pxMap(ghostFrame, w, h);
-  const T = torsoScale(um, w, h);
-  const uj = um.get(joint);
-  const gj = gm.get(joint);
-  if (!uj) return;
+  ctx.shadowBlur = 0;
+  ctx.strokeStyle = "rgba(40,20,8,0.45)";
+  ctx.lineWidth = Math.max(1, r * 0.06);
+  ctx.beginPath();
+  ctx.arc(0, 0, r, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(-r, 0);
+  ctx.lineTo(r, 0);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.ellipse(0, 0, r * 0.42, r, 0, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.restore();
+}
 
+/** Minimal pulsing orange ring on the flawed joint. */
+export function drawFlawMarker(ctx: CanvasRenderingContext2D, frame: PoseFrame, w: number, h: number, joint: string, pulse: number): void {
+  const map = pxMap(frame, w, h);
+  const T = torsoScale(map, w, h);
+  const j = map.get(joint);
+  if (!j) return;
   ctx.save();
   ctx.strokeStyle = SIGNAL;
-  ctx.fillStyle = SIGNAL;
   ctx.shadowColor = SIGNAL;
-
-  if (gj && pxDist(uj, gj) > T * 0.06) {
-    ctx.setLineDash([5, 4]);
-    ctx.lineWidth = 1.5;
-    ctx.globalAlpha = 0.5;
-    ctx.shadowBlur = 8;
-    ctx.beginPath();
-    ctx.moveTo(uj.x, uj.y);
-    ctx.lineTo(gj.x, gj.y);
-    ctx.stroke();
-    ctx.setLineDash([]);
-    ctx.globalAlpha = 0.8;
-    ctx.lineWidth = 1.5;
-    ctx.beginPath();
-    ctx.arc(gj.x, gj.y, Math.max(4, T * 0.05), 0, Math.PI * 2);
-    ctx.stroke();
-  }
-
-  // Angle-delta arc: the sweep between your bone and the ideal bone direction.
-  const childName = CHILD_JOINT[joint];
-  const uc = childName ? um.get(childName) : undefined;
-  const gc = childName ? gm.get(childName) : undefined;
-  if (uc && gc && gj) {
-    const a1 = Math.atan2(uc.y - uj.y, uc.x - uj.x);
-    const a2 = Math.atan2(gc.y - gj.y, gc.x - gj.x);
-    let d = a2 - a1;
-    while (d > Math.PI) d -= 2 * Math.PI;
-    while (d < -Math.PI) d += 2 * Math.PI;
-    if (Math.abs(d) > 0.05) {
-      ctx.globalAlpha = 0.85;
-      ctx.lineWidth = 2.5;
-      ctx.shadowBlur = 10;
-      ctx.beginPath();
-      ctx.arc(uj.x, uj.y, Math.max(14, T * 0.26), a1, a1 + d, d < 0);
-      ctx.stroke();
-    }
-  }
-
-  ctx.globalAlpha = 1;
   ctx.shadowBlur = 10 + pulse * 8;
-  disc(ctx, uj, Math.max(4, T * 0.045));
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  ctx.arc(j.x, j.y, Math.max(10, T * 0.17) * (1 + pulse * 0.12), 0, Math.PI * 2);
+  ctx.stroke();
   ctx.restore();
-}
-
-export function flawConnectionKeys(joint: string): Set<string> {
-  const keys = new Set<string>();
-  for (const [a, b] of POSE_CONNECTIONS_BY_NAME) {
-    if (a === joint || b === joint) keys.add(`${a}|${b}`);
-  }
-  return keys;
 }
