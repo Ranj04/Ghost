@@ -20,7 +20,9 @@ export function useCamera(): UseCamera {
   const start = useCallback(async () => {
     try {
       const s = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: "user", width: { ideal: 1280 }, height: { ideal: 720 } },
+        // Pose runs per-frame, so capture at a modest resolution — the landmarker
+        // downscales internally and 640x480 keeps detection fast/smooth.
+        video: { facingMode: "user", width: { ideal: 640 }, height: { ideal: 480 }, frameRate: { ideal: 30 } },
         audio: false,
       });
       streamRef.current = s;

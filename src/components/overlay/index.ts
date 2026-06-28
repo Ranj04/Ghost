@@ -1,11 +1,14 @@
 // PERSON A (works on main) — overlay component surface. See OWNERSHIP.md.
 export { GhostOverlay, type GhostOverlayProps } from "./GhostOverlay";
 export {
-  drawSkeleton,
+  drawBackdrop,
+  drawGhostFigure,
+  drawAthleteFigure,
   drawHighlight,
+  fillBody,
   jointsForFlaw,
   resolvableConnections,
   POSE_CONNECTIONS_BY_NAME,
   JOINT_NAMES,
-  type SkeletonStyle,
+  type Offscreen,
 } from "./skeleton";
