@@ -80,10 +80,10 @@ export function GhostOverlay({ result, width = 440, height = 560, className, com
     playingRef.current = playing;
   }, [playing]);
 
-  // posRef survives effect re-runs — reset when a new capture arrives or length changes.
+  // posRef survives effect re-runs — reset on a new capture. The rAF loop syncs
+  // `index` from posRef, so no setState here (avoids cascading-render lint).
   useEffect(() => {
     posRef.current = 0;
-    setIndex(0);
   }, [result.capture.id, total]);
 
   // Stable fit transform (centers + scales the figure) from all visible poses.
