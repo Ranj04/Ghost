@@ -17,7 +17,7 @@ PERSON B (Partner) — works on main — owns:
   src/app/**             (routing, pages, layout)
   src/lib/db/**          (InsForge auth + persistence)
   src/lib/payments/**    (Kite PvP stake)
-  src/lib/deploy/**      (Nebius)
+  src/lib/deploy/**      (Vercel + Nebius reference-builder)
   src/lib/finchip/**     (submission packaging)
   src/components/ui/**   (shadcn + shared UI)
   src/components/results/**  (results + progress views)
@@ -26,4 +26,6 @@ SHARED — FROZEN — changes require a NOTIFY PARTNER gate:
   src/lib/contracts.ts
   OWNERSHIP.md
   docs/ARCHITECTURE.md (sponsor table only)
+
+RULE: work only in your own folders. Before every push: git pull --rebase origin main.
 ```
