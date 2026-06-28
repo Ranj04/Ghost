@@ -24,6 +24,8 @@ export interface GhostOverlayProps {
   width?: number;
   height?: number;
   className?: string;
+  /** Canvas only — no chrome or playback controls (e.g. landing hero). */
+  compact?: boolean;
 }
 
 const easeOutCubic = (t: number) => 1 - Math.pow(1 - t, 3);
@@ -43,7 +45,7 @@ function lerpFrame(a: PoseFrame, b: PoseFrame, t: number): PoseFrame {
   };
 }
 
-export function GhostOverlay({ result, width = 440, height = 560, className }: GhostOverlayProps) {
+export function GhostOverlay({ result, width = 440, height = 560, className, compact = false }: GhostOverlayProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const frames = result.capture.frames;
   const ghostFrames = result.ghostRef;
@@ -177,21 +179,35 @@ export function GhostOverlay({ result, width = 440, height = 560, className }: G
   const posPct = total > 1 ? (index / (total - 1)) * 100 : 0;
 
   return (
-    <div className={className} style={{ width }}>
-      <div className="relative overflow-hidden rounded-xl" style={{ width, height, border: "1px solid var(--line)" }}>
-        <canvas ref={canvasRef} className="block" />
-        <div className="pointer-events-none absolute inset-x-0 top-0 flex items-center justify-between p-3">
-          <span className="rounded-full px-2.5 py-1 text-[10px] font-medium uppercase tracking-[0.18em]" style={{ background: "rgba(255,255,255,0.05)", color: "var(--muted-ink)" }}>
-            Form vs ghost
-          </span>
-          {Math.abs(index - releaseIndex) <= 1 && (
-            <span className="rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em]" style={{ background: "var(--blue)", color: "#04080f" }}>
-              Release
+    <div className={className} style={compact ? undefined : { width }}>
+      <div
+        className={compact ? "relative h-full w-full overflow-hidden" : "relative overflow-hidden rounded-xl"}
+        style={
+          compact
+            ? undefined
+            : { width, height, border: "1px solid var(--line)" }
+        }
+      >
+        <canvas
+          ref={canvasRef}
+          className="block"
+          style={compact ? { width: "100%", height: "100%" } : undefined}
+        />
+        {!compact && (
+          <div className="pointer-events-none absolute inset-x-0 top-0 flex items-center justify-between p-3">
+            <span className="rounded-full px-2.5 py-1 text-[10px] font-medium uppercase tracking-[0.18em]" style={{ background: "rgba(255,255,255,0.05)", color: "var(--muted-ink)" }}>
+              Form vs ghost
             </span>
-          )}
-        </div>
+            {Math.abs(index - releaseIndex) <= 1 && (
+              <span className="rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em]" style={{ background: "var(--blue)", color: "#04080f" }}>
+                Release
+              </span>
+            )}
+          </div>
+        )}
       </div>
 
+      {!compact && (
       <div className="mt-4 flex items-center gap-3">
         <button
           type="button"
@@ -215,6 +231,7 @@ export function GhostOverlay({ result, width = 440, height = 560, className }: G
           </span>
         </div>
       </div>
+      )}
     </div>
   );
 }

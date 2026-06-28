@@ -170,3 +170,15 @@
     rgb(255 255 255 / 8%) var(--score)
   );
 }
+
+@keyframes hero-scan {
+  0%,
+  100% {
+    top: 14%;
+    opacity: 0.35;
+  }
+  50% {
+    top: 86%;
+    opacity: 0.9;
+  }
+}

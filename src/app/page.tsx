@@ -1,8 +1,9 @@
-import { ArrowRight, Crosshair, ScanLine, Sparkles } from "lucide-react";
+import { ArrowRight, Crosshair, ScanLine } from "lucide-react";
 import Link from "next/link";
 
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
+import { HeroShowcase } from "@/components/overlay";
 import { cn } from "@/lib/utils";
 
 export default function Home() {
@@ -15,8 +16,7 @@ export default function Home() {
             variant="outline"
             className="h-7 border-white/10 bg-white/5 px-3 backdrop-blur"
           >
-            <Sparkles className="text-[#5aa0ff]" />
-            AI basketball form coach
+            Basketball form coach
           </Badge>
           <h1 className="mt-7 max-w-3xl text-6xl font-semibold leading-[0.95] tracking-[-0.065em] sm:text-7xl">
             See the shot
@@ -60,40 +60,7 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="relative mx-auto w-full max-w-lg">
-          <div className="absolute -inset-8 -z-10 rounded-full bg-[#2e86ff]/20 blur-3xl" />
-          <div className="rotate-2 rounded-[2.2rem] border border-white/10 bg-[#101a2b] p-3 shadow-2xl shadow-black/20">
-            <div className="relative aspect-[4/5] overflow-hidden rounded-[1.65rem] bg-[#16202f]">
-              <div className="capture-grid absolute inset-0 opacity-20" />
-              <div className="absolute left-5 top-5 flex items-center gap-2 rounded-full bg-black/35 px-3 py-1.5 text-xs text-white/70 backdrop-blur">
-                <span className="size-2 rounded-full bg-red-400" />
-                Shot 01 · side view
-              </div>
-              <div className="absolute inset-x-[31%] top-[18%] h-[60%]">
-                <div className="absolute left-[42%] top-0 size-14 rounded-full border-2 border-[#2e86ff] bg-[#2e86ff]/10" />
-                <div className="absolute left-1/2 top-[13%] h-[42%] w-0.5 -translate-x-1/2 rotate-3 bg-[#2e86ff]" />
-                <div className="absolute left-[26%] top-[21%] h-0.5 w-[55%] rotate-[-25deg] bg-[#2e86ff]" />
-                <div className="absolute left-[49%] top-[54%] h-[44%] w-0.5 rotate-[18deg] bg-[#2e86ff]" />
-                <div className="absolute left-[49%] top-[54%] h-[44%] w-0.5 rotate-[-22deg] bg-[#2e86ff]" />
-              </div>
-              <div className="absolute inset-x-5 bottom-5 rounded-2xl border border-white/10 bg-black/45 p-4 text-white backdrop-blur">
-                <div className="flex items-end justify-between">
-                  <div>
-                    <span className="text-xs text-white/45">
-                      Live form score
-                    </span>
-                    <strong className="mt-1 block text-4xl font-semibold">
-                      78
-                    </strong>
-                  </div>
-                  <Badge className="bg-[#2e86ff] text-[#f4f1e8]">
-                    Elbow flare
-                  </Badge>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
+        <HeroShowcase />
       </div>
     </main>
   );
