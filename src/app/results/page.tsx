@@ -1,4 +1,5 @@
 import { ResultsView } from "@/components/results";
+import { GhostOverlay } from "@/components/overlay";
 import { analyzeShot, coachFlaw, mockShotCapture } from "@/lib/core";
 
 import { SaveSessionButton } from "./save-session-button";
@@ -18,6 +19,7 @@ export default async function ResultsPage() {
       <ResultsView
         analysis={analysis}
         coaching={coaching}
+        ghostOverlay={<GhostOverlay result={analysis} />}
         saveAction={
           <SaveSessionButton analysis={analysis} coaching={coaching} />
         }
