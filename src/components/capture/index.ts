@@ -1,2 +1,2 @@
-// Stub barrel — owned by PERSON A (works on main). See OWNERSHIP.md.
-export {};
+// PERSON A (works on main) — capture component surface. See OWNERSHIP.md.
+export { CaptureView, type CaptureViewProps } from "./CaptureView";
