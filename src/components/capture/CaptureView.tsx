@@ -5,6 +5,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { PoseLandmarker, type NormalizedLandmark } from "@mediapipe/tasks-vision";
 import { Button } from "@/components/ui/button";
+import { BONE, GHOST, MUTED, SIGNAL } from "@/components/overlay/palette";
 import { useCamera } from "@/lib/vision/useCamera";
 import { createPoseLandmarker } from "@/lib/vision/poseLandmarker";
 import { landmarksToKeypoints } from "@/lib/vision/landmarks";
@@ -40,7 +41,7 @@ function drawGatedPreview(ctx: CanvasRenderingContext2D, landmarks: NormalizedLa
     }
   }
   ctx.shadowBlur = 0;
-  ctx.fillStyle = "#F2F0E9";
+  ctx.fillStyle = BONE;
   for (const p of landmarks) {
     if (isVisible(p)) {
       ctx.beginPath();
@@ -181,17 +182,17 @@ export function CaptureView({ onCapture, className }: CaptureViewProps) {
         <canvas ref={canvasRef} className="pointer-events-none absolute inset-0 h-full w-full -scale-x-100" />
 
         {recording && (
-          <span className="absolute left-3 top-3 flex items-center gap-2 rounded-full bg-black/60 px-3 py-1 text-xs font-medium text-white">
-            <span className="h-2 w-2 animate-pulse rounded-full bg-red-500" /> REC
+          <span className="absolute left-3 top-3 flex items-center gap-2 rounded-full bg-black/70 px-3 py-1 text-xs font-medium text-white">
+            <span className="h-2 w-2 animate-pulse rounded-full" style={{ background: SIGNAL }} /> REC
           </span>
         )}
 
         {ready && !recording && (
           <span
-            className="absolute right-3 top-3 flex items-center gap-2 rounded-full bg-black/55 px-3 py-1 text-xs font-medium backdrop-blur"
-            style={{ color: capturable ? "#4FD6E0" : "#8B93A0" }}
+            className="absolute right-3 top-3 flex items-center gap-2 rounded-full bg-black/70 px-3 py-1 text-xs font-medium"
+            style={{ color: capturable ? GHOST : MUTED }}
           >
-            <span className="h-2 w-2 rounded-full" style={{ background: capturable ? "#4FD6E0" : "#8B93A0" }} />
+            <span className="h-2 w-2 rounded-full" style={{ background: capturable ? GHOST : MUTED }} />
             {capturable ? "Ready" : "Not ready"}
           </span>
         )}
@@ -205,7 +206,11 @@ export function CaptureView({ onCapture, className }: CaptureViewProps) {
         )}
       </div>
 
-      {(error || initError) && <p className="mt-2 text-sm text-red-500">{error ?? initError}</p>}
+      {(error || initError) && (
+        <p className="mt-2 text-sm" style={{ color: SIGNAL }}>
+          {error ?? initError}
+        </p>
+      )}
       <div className="mt-3 flex items-center gap-3">
         <Button onClick={toggleRecording} disabled={recordDisabled} variant={recording ? "destructive" : "default"}>
           {recording ? "Stop and analyze" : "Record a shot"}

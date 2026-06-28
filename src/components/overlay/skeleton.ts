@@ -7,11 +7,7 @@
 // the ideal. Glowing-aqua-behind / crisp-white-in-front keeps it legible.
 import type { JointMetrics, PoseFrame } from "@/lib/contracts";
 import { isVisible } from "@/lib/vision/visibility";
-
-const INK = "#0E1116";
-const GHOST = "#4FD6E0";
-const BONE = "#F2F0E9";
-const SIGNAL = "#FF6B4A";
+import { BONE, GHOST, INK, SIGNAL } from "./palette";
 
 export const POSE_CONNECTIONS_BY_NAME: [string, string][] = [
   ["left_shoulder", "right_shoulder"],
@@ -136,11 +132,16 @@ function fillBody(ctx: CanvasRenderingContext2D, frame: PoseFrame, w: number, h:
   const lh = P("left_hip");
   const rh = P("right_hip");
 
+  // Solid trunk along the spine gives the side-on torso real body mass (a thin
+  // shoulders->hips quad alone reads as a paper sliver).
+  const trunkTop = midpoint(ls, rs);
+  const trunkBot = midpoint(lh, rh);
+  if (trunkTop && trunkBot) limb(ctx, trunkTop, trunkBot, 0.18 * T, 0.16 * T);
   if (ls && rs && rh && lh) roundedPolygon(ctx, [ls, rs, rh, lh]);
-  disc(ctx, ls, 0.1 * T);
-  disc(ctx, rs, 0.1 * T);
-  disc(ctx, lh, 0.095 * T);
-  disc(ctx, rh, 0.095 * T);
+  disc(ctx, ls, 0.12 * T);
+  disc(ctx, rs, 0.12 * T);
+  disc(ctx, lh, 0.12 * T);
+  disc(ctx, rh, 0.12 * T);
 
   limb(ctx, ls, P("left_elbow"), 0.08 * T, 0.065 * T);
   limb(ctx, P("left_elbow"), P("left_wrist"), 0.065 * T, 0.048 * T);

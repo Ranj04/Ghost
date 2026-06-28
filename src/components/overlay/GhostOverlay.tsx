@@ -2,11 +2,12 @@
 // The form-vs-ghost signature: a luminous aqua IDEAL light-figure with your crisp
 // BONE skeleton on top and one coral deviation showing the gap. A single rAF loop
 // drives the eased ghost intro, the deviation pulse, and playback. Retina-aware.
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { Pause, Play, RotateCcw } from "lucide-react";
 import { detectShootingSide } from "@/lib/analysis";
 import { isVisible } from "@/lib/vision/visibility";
 import type { AnalysisResult } from "@/lib/contracts";
+import { BONE, GHOST, INK, MUTED, SIGNAL, SURFACE } from "./palette";
 import {
   drawBackdrop,
   drawDeviation,
@@ -161,14 +162,14 @@ export function GhostOverlay({ result, width = 440, height = 560, className }: G
 
   return (
     <div className={className} style={{ width }}>
-      <div className="relative overflow-hidden rounded-2xl" style={{ width, height, boxShadow: "0 0 0 1px #232A33, 0 20px 60px -20px rgba(0,0,0,0.8)" }}>
+      <div className="relative overflow-hidden rounded-lg" style={{ width, height, border: `1px solid ${SURFACE}` }}>
         <canvas ref={canvasRef} className="block" />
-        <div className="pointer-events-none absolute inset-x-0 top-0 flex items-center justify-between p-3.5">
-          <span className="rounded-full px-2.5 py-1 text-[10px] font-medium uppercase tracking-[0.18em] text-[#8B93A0]" style={{ background: "rgba(255,255,255,0.04)" }}>
+        <div className="pointer-events-none absolute inset-x-0 top-0 flex items-center justify-between p-3">
+          <span className="rounded-full px-2.5 py-1 text-xs font-medium uppercase tracking-wide" style={{ background: SURFACE, color: MUTED }}>
             Form vs ghost
           </span>
           {isReleaseFrame && (
-            <span className="rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#0E1116]" style={{ background: "#4FD6E0" }}>
+            <span className="rounded-full px-2.5 py-1 text-xs font-semibold uppercase tracking-wide" style={{ background: GHOST, color: INK }}>
               Release
             </span>
           )}
@@ -185,8 +186,8 @@ export function GhostOverlay({ result, width = 440, height = 560, className }: G
             }
             setPlaying((p) => !p);
           }}
-          className="grid size-9 shrink-0 place-items-center rounded-full text-[#0E1116] transition hover:brightness-110"
-          style={{ background: "#4FD6E0" }}
+          className="grid size-9 shrink-0 place-items-center rounded-full transition hover:brightness-110"
+          style={{ background: GHOST, color: INK }}
           aria-label={playing ? "Pause" : "Play"}
         >
           {playing ? <Pause className="size-4" /> : atEnd ? <RotateCcw className="size-4" /> : <Play className="size-4" />}
@@ -195,7 +196,7 @@ export function GhostOverlay({ result, width = 440, height = 560, className }: G
         <div className="relative flex-1">
           <div
             className="pointer-events-none absolute top-1/2 z-10 h-3 w-px -translate-y-1/2"
-            style={{ left: `${releasePct}%`, background: "#4FD6E0", boxShadow: "0 0 6px #4FD6E0" }}
+            style={{ left: `${releasePct}%`, background: GHOST }}
             title="Release frame"
           />
           <input
@@ -211,24 +212,25 @@ export function GhostOverlay({ result, width = 440, height = 560, className }: G
               indexRef.current = v;
             }}
             aria-label="Scrub shot"
-            className="w-full cursor-pointer appearance-none bg-transparent [&::-webkit-slider-runnable-track]:h-1 [&::-webkit-slider-runnable-track]:rounded-full [&::-webkit-slider-runnable-track]:bg-[#232A33] [&::-webkit-slider-thumb]:-mt-1.5 [&::-webkit-slider-thumb]:size-3.5 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-[#F2F0E9] [&::-moz-range-track]:h-1 [&::-moz-range-track]:rounded-full [&::-moz-range-track]:bg-[#232A33] [&::-moz-range-thumb]:size-3.5 [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-[#F2F0E9]"
+            style={{ "--track": SURFACE, "--thumb": BONE } as CSSProperties}
+            className="w-full cursor-pointer appearance-none bg-transparent [&::-webkit-slider-runnable-track]:h-1 [&::-webkit-slider-runnable-track]:rounded-full [&::-webkit-slider-runnable-track]:bg-[var(--track)] [&::-webkit-slider-thumb]:-mt-1.5 [&::-webkit-slider-thumb]:size-3 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-[var(--thumb)] [&::-moz-range-track]:h-1 [&::-moz-range-track]:rounded-full [&::-moz-range-track]:bg-[var(--track)] [&::-moz-range-thumb]:size-3 [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-[var(--thumb)]"
           />
         </div>
 
-        <span className="w-14 shrink-0 text-right font-mono text-xs tabular-nums text-[#8B93A0]">
+        <span className="w-14 shrink-0 text-right font-mono text-xs tabular-nums" style={{ color: MUTED }}>
           {String(index + 1).padStart(2, "0")}/{total}
         </span>
       </div>
 
-      <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-[#8B93A0]">
+      <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs" style={{ color: MUTED }}>
         <span className="flex items-center gap-1.5">
-          <span className="size-2.5 rounded-full" style={{ background: "#F2F0E9" }} /> You
+          <span className="size-2.5 rounded-full" style={{ background: BONE }} /> You
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="size-2.5 rounded-full" style={{ background: "#4FD6E0", boxShadow: "0 0 8px 2px rgba(79,214,224,0.6)" }} /> Ideal
+          <span className="size-2.5 rounded-full" style={{ background: GHOST }} /> Ideal
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="size-2.5 rounded-full" style={{ border: "2px solid #FF6B4A" }} /> {result.topFlaw.label}
+          <span className="size-2.5 rounded-full" style={{ border: `2px solid ${SIGNAL}` }} /> {result.topFlaw.label}
         </span>
       </div>
     </div>
