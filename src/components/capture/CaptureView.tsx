@@ -211,9 +211,6 @@ export function CaptureView({ onCapture, className }: CaptureViewProps) {
           {recording ? "Stop and analyze" : "Record a shot"}
         </Button>
         {!ready && !initError && <span className="text-sm text-muted-foreground">Starting camera…</span>}
-        {ready && !capturable && !recording && (
-          <span className="text-sm text-muted-foreground">Get your full body in frame to record.</span>
-        )}
       </div>
     </div>
   );
