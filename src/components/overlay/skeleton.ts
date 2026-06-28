@@ -7,7 +7,7 @@
 // the ideal. Glowing-aqua-behind / crisp-white-in-front keeps it legible.
 import type { JointMetrics, PoseFrame } from "@/lib/contracts";
 import { isVisible } from "@/lib/vision/visibility";
-import { BONE, GHOST, INK, SIGNAL } from "./palette";
+import { BONE, GHOST, GHOST_RGB, INK, SIGNAL } from "./palette";
 
 export const POSE_CONNECTIONS_BY_NAME: [string, string][] = [
   ["left_shoulder", "right_shoulder"],
@@ -168,20 +168,40 @@ function fillBody(ctx: CanvasRenderingContext2D, frame: PoseFrame, w: number, h:
   }
 }
 
-/** Dark gym stage: deep radial ink + faint aqua floor glow. */
+/** Blue-black mocap stage: deep radial ink, a faint blueprint grid, and a blue
+ *  floor glow that grounds the figure. */
 export function drawBackdrop(ctx: CanvasRenderingContext2D, w: number, h: number): void {
-  const g = ctx.createRadialGradient(w * 0.5, h * 0.42, Math.min(w, h) * 0.05, w * 0.5, h * 0.55, Math.max(w, h) * 0.8);
-  g.addColorStop(0, "#121A24");
-  g.addColorStop(0.6, "#0c121b");
+  const g = ctx.createRadialGradient(w * 0.5, h * 0.4, Math.min(w, h) * 0.05, w * 0.5, h * 0.55, Math.max(w, h) * 0.85);
+  g.addColorStop(0, "#0E1830");
+  g.addColorStop(0.55, "#0A101E");
   g.addColorStop(1, INK);
   ctx.fillStyle = g;
   ctx.fillRect(0, 0, w, h);
 
-  const floor = ctx.createRadialGradient(w * 0.5, h * 0.9, 4, w * 0.5, h * 0.9, w * 0.46);
-  floor.addColorStop(0, "rgba(79, 214, 224, 0.10)");
-  floor.addColorStop(1, "rgba(79, 214, 224, 0)");
+  // Faint blueprint grid — the biomechanics-lab feel.
+  ctx.save();
+  ctx.strokeStyle = `rgba(${GHOST_RGB}, 0.05)`;
+  ctx.lineWidth = 1;
+  const step = Math.max(28, Math.round(Math.min(w, h) / 13));
+  for (let x = step; x < w; x += step) {
+    ctx.beginPath();
+    ctx.moveTo(x, 0);
+    ctx.lineTo(x, h);
+    ctx.stroke();
+  }
+  for (let y = step; y < h; y += step) {
+    ctx.beginPath();
+    ctx.moveTo(0, y);
+    ctx.lineTo(w, y);
+    ctx.stroke();
+  }
+  ctx.restore();
+
+  const floor = ctx.createRadialGradient(w * 0.5, h * 0.92, 4, w * 0.5, h * 0.92, w * 0.52);
+  floor.addColorStop(0, `rgba(${GHOST_RGB}, 0.14)`);
+  floor.addColorStop(1, `rgba(${GHOST_RGB}, 0)`);
   ctx.fillStyle = floor;
-  ctx.fillRect(0, h * 0.7, w, h * 0.3);
+  ctx.fillRect(0, h * 0.64, w, h * 0.36);
 }
 
 /** Edge vignette, drawn last. */

@@ -129,6 +129,21 @@ export function GhostOverlay({ result, width = 440, height = 560, className }: G
         }
       }
       ctx.restore();
+      // One-shot scan sweep: a blue mocap line materializes the figure on load.
+      if (!reduced && intro < 1) {
+        const yScan = height * 0.08 + intro * height * 0.84;
+        ctx.save();
+        ctx.strokeStyle = GHOST;
+        ctx.globalAlpha = 0.65 * (1 - intro);
+        ctx.shadowColor = GHOST;
+        ctx.shadowBlur = 18;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(0, yScan);
+        ctx.lineTo(width, yScan);
+        ctx.stroke();
+        ctx.restore();
+      }
       drawVignette(ctx, width, height);
     };
 
