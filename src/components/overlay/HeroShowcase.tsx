@@ -78,7 +78,7 @@ export function HeroShowcase() {
               {result && (
                 <span
                   className="rounded-full px-3 py-1 text-xs font-medium"
-                  style={{ background: "var(--blue)", color: "#04080f" }}
+                  style={{ background: "var(--orange)", color: "#04080f" }}
                 >
                   {result.topFlaw.label}
                 </span>

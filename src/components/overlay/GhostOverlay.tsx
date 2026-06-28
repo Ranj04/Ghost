@@ -13,6 +13,7 @@ import {
   drawFlawMarker,
   drawGhostLines,
   drawPlayer,
+  drawShotArc,
   drawVignette,
   flawConnectionKeys,
   jointsForFlaw,
@@ -139,6 +140,20 @@ export function GhostOverlay({ result, width = 440, height = 560, className, com
       ctx.translate(-fit.cx, -fit.cy);
       if (ghost) drawGhostLines(ctx, ghost, width, height, intro);
       drawPlayer(ctx, user, width, height, flawKeys);
+      // Glowing shot-arc tracer along the ball's flight path.
+      if (pos > releaseIndex) {
+        const rel = frames[releaseIndex].keypoints.find((p) => p.name === shootWrist);
+        if (rel) {
+          const curP = (pos - releaseIndex) / Math.max(1, total - 1 - releaseIndex);
+          const steps = 16;
+          const pts: { x: number; y: number }[] = [];
+          for (let s = 0; s <= steps; s++) {
+            const p = curP * (s / steps);
+            pts.push({ x: (rel.x + 0.26 * p) * width, y: (rel.y - 0.7 * p + 0.85 * p * p) * height });
+          }
+          drawShotArc(ctx, pts);
+        }
+      }
       const ball = ballAt(pos, user);
       if (ball) drawBall(ctx, ball.x * width, ball.y * height, Math.max(7, torsoLengthPx(user, width, height) * 0.17));
       if (flawJoint && pos >= releaseIndex - 1) {

@@ -231,6 +231,27 @@ export function drawBall(ctx: CanvasRenderingContext2D, x: number, y: number, r:
   ctx.restore();
 }
 
+/** A glowing shot-arc tracer along the ball's flight path (px points, tail→head
+ *  fades in). Reads as "shot tracking" — instrument blue. */
+export function drawShotArc(ctx: CanvasRenderingContext2D, pts: { x: number; y: number }[]): void {
+  if (pts.length < 2) return;
+  ctx.save();
+  ctx.lineCap = "round";
+  ctx.shadowColor = GHOST;
+  ctx.shadowBlur = 8;
+  ctx.strokeStyle = GHOST;
+  for (let i = 1; i < pts.length; i++) {
+    const f = i / (pts.length - 1);
+    ctx.globalAlpha = 0.06 + 0.5 * f;
+    ctx.lineWidth = 1.2 + 2.4 * f;
+    ctx.beginPath();
+    ctx.moveTo(pts[i - 1].x, pts[i - 1].y);
+    ctx.lineTo(pts[i].x, pts[i].y);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
 /** Minimal pulsing orange ring on the flawed joint. */
 export function drawFlawMarker(ctx: CanvasRenderingContext2D, frame: PoseFrame, w: number, h: number, joint: string, pulse: number): void {
   const map = pxMap(frame, w, h);

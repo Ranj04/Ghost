@@ -9,6 +9,7 @@ export {
   drawPlayer,
   drawBall,
   drawFlawMarker,
+  drawShotArc,
   torsoLengthPx,
   flawConnectionKeys,
   jointsForFlaw,
