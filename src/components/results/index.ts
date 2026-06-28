@@ -1,2 +1,1 @@
-// Stub barrel — owned by PERSON B (works on main). See OWNERSHIP.md.
-export {};
+export { ResultsView, type ResultsViewProps } from "./results-view";
