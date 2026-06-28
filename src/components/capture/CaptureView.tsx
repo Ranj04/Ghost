@@ -16,6 +16,10 @@ import type { PoseFrame, ShotCapture } from "@/lib/contracts";
 export interface CaptureViewProps {
   onCapture?: (capture: ShotCapture) => void;
   className?: string;
+  /** Cap the stored frame rate (default 20fps); `0` keeps every buffered frame. */
+  targetFps?: number;
+  /** Decimal places for normalized coords (default 4); `null` keeps full precision. */
+  precision?: number | null;
 }
 
 const POSE_CONNECTIONS = PoseLandmarker.POSE_CONNECTIONS as { start: number; end: number }[];
@@ -86,7 +90,7 @@ function isCapturable(landmarks: NormalizedLandmark[]): boolean {
   return torso && arm && leg;
 }
 
-export function CaptureView({ onCapture, className }: CaptureViewProps) {
+export function CaptureView({ onCapture, className, targetFps, precision }: CaptureViewProps) {
   const { videoRef, error, start, stop } = useCamera();
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const landmarkerRef = useRef<PoseLandmarker | null>(null);
@@ -178,16 +182,22 @@ export function CaptureView({ onCapture, className }: CaptureViewProps) {
     return () => cancelAnimationFrame(raf);
   }, [ready, videoRef]);
 
-  // Keep the latest onCapture without retriggering the recording effect.
+  // Keep the latest onCapture/build options without retriggering the recording
+  // effect (finishRecording must stay referentially stable).
   const onCaptureRef = useRef(onCapture);
+  const buildOptsRef = useRef({ targetFps, precision });
   useEffect(() => {
     onCaptureRef.current = onCapture;
-  }, [onCapture]);
+    buildOptsRef.current = { targetFps, precision };
+  }, [onCapture, targetFps, precision]);
 
   const finishRecording = useCallback(() => {
     if (!recordingRef.current) return;
     recordingRef.current = false;
-    const capture = buildCapture(bufferRef.current, { view: "side" });
+    const capture = buildCapture(bufferRef.current, {
+      view: "side",
+      ...buildOptsRef.current,
+    });
     setPhase("idle");
     onCaptureRef.current?.(capture);
   }, []);
