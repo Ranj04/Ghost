@@ -7,6 +7,12 @@
 
 export const VISIBILITY_THRESHOLD = 0.5;
 
+/** Looser gate for "ready to record" — laptop webcams clip ankles/feet first. */
+export const FRAMING_VISIBILITY_THRESHOLD = 0.35;
+
+/** Allow landmarks slightly outside the normalized frame (common at edges). */
+export const FRAME_MARGIN = { x: 0.06, y: 0.12 };
+
 /** Anything with normalized coords plus a confidence signal. Raw MediaPipe
  *  landmarks carry `visibility`/`presence`; our Keypoint contract carries `score`
  *  (which we set from visibility at capture time). */
@@ -30,6 +36,19 @@ export function isVisible(lm: ScorableLandmark): boolean {
     lm.y >= 0 &&
     lm.y <= 1
   );
+}
+
+/** Ready-to-record check: lower confidence + small edge margin so you don't
+ *  need to stand across the room for ankles to register. Draw/analysis still
+ *  use {@link isVisible} so off-frame junk never renders. */
+export function isVisibleForFraming(lm: ScorableLandmark): boolean {
+  const visibility = lm.visibility ?? lm.score ?? 1;
+  const presence = lm.presence ?? 1;
+  if (visibility < FRAMING_VISIBILITY_THRESHOLD || presence < FRAMING_VISIBILITY_THRESHOLD) {
+    return false;
+  }
+  const { x: mx, y: my } = FRAME_MARGIN;
+  return lm.x >= -mx && lm.x <= 1 + mx && lm.y >= -my && lm.y <= 1 + my;
 }
 
 /** How many of a set of landmarks are visible (for the "N/33" debug readout). */

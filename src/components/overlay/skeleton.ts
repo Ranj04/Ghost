@@ -231,6 +231,53 @@ export function drawBall(ctx: CanvasRenderingContext2D, x: number, y: number, r:
   ctx.restore();
 }
 
+/** A holographic hoop: glowing blue rim + a minimal net cone, with a swish ripple
+ *  on the make. (x,y = rim center, r = rim radius, swish 0..1 = make ripple.) */
+export function drawHoop(ctx: CanvasRenderingContext2D, x: number, y: number, r: number, swish = 0): void {
+  const rimY = r * 0.34;
+  const netDepth = r * 1.3;
+  const bottomR = r * 0.42;
+  ctx.save();
+  ctx.lineCap = "round";
+
+  // Net cone.
+  ctx.strokeStyle = `rgba(${GHOST_RGB}, 0.3)`;
+  ctx.lineWidth = Math.max(1, r * 0.05);
+  const segs = 8;
+  for (let i = 0; i <= segs; i++) {
+    const f = i / segs;
+    ctx.beginPath();
+    ctx.moveTo(x - r + 2 * r * f, y);
+    ctx.lineTo(x - bottomR + 2 * bottomR * f, y + netDepth);
+    ctx.stroke();
+  }
+  for (const d of [0.5, 1]) {
+    ctx.beginPath();
+    ctx.ellipse(x, y + netDepth * d, r - (r - bottomR) * d, rimY * (1 - d * 0.4), 0, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+
+  // Rim.
+  ctx.strokeStyle = GHOST;
+  ctx.shadowColor = GHOST;
+  ctx.shadowBlur = 12;
+  ctx.lineWidth = Math.max(2.5, r * 0.16);
+  ctx.beginPath();
+  ctx.ellipse(x, y, r, rimY, 0, 0, Math.PI * 2);
+  ctx.stroke();
+
+  // Swish ripple expanding off the rim on the make.
+  if (swish > 0 && swish < 1) {
+    const e = 1 + swish * 0.85;
+    ctx.globalAlpha = (1 - swish) * 0.7;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.ellipse(x, y, r * e, rimY * e, 0, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
 /** A glowing shot-arc tracer along the ball's flight path (px points, tail→head
  *  fades in). Reads as "shot tracking" — instrument blue. */
 export function drawShotArc(ctx: CanvasRenderingContext2D, pts: { x: number; y: number }[]): void {

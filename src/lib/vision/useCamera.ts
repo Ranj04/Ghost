@@ -20,11 +20,33 @@ export function useCamera(): UseCamera {
   const start = useCallback(async () => {
     try {
       const s = await navigator.mediaDevices.getUserMedia({
-        // Pose runs per-frame, so capture at a modest resolution — the landmarker
-        // downscales internally and 640x480 keeps detection fast/smooth.
-        video: { facingMode: "user", width: { ideal: 640 }, height: { ideal: 480 }, frameRate: { ideal: 30 } },
+        // Taller 4:3-ish frame fits more vertical FOV on laptop webcams (better
+        // for full-body side-on than default 16:9). Pose still runs fast at 640×480.
+        video: {
+          facingMode: "user",
+          width: { ideal: 640, max: 960 },
+          height: { ideal: 480, max: 720 },
+          aspectRatio: { ideal: 4 / 3 },
+          frameRate: { ideal: 30 },
+        },
         audio: false,
       });
+
+      // Widest FOV when the device exposes zoom (common on phone; some laptops too).
+      const track = s.getVideoTracks()[0];
+      const caps = track.getCapabilities?.() as MediaTrackCapabilities & {
+        zoom?: { min?: number; max?: number };
+      };
+      if (caps?.zoom?.min != null) {
+        try {
+          await track.applyConstraints({
+            advanced: [{ zoom: caps.zoom.min }],
+          } as unknown as MediaTrackConstraints);
+        } catch {
+          // unsupported zoom constraint — keep default
+        }
+      }
+
       streamRef.current = s;
       setStream(s);
       setError(null);

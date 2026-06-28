@@ -10,7 +10,7 @@ import { useCamera } from "@/lib/vision/useCamera";
 import { createPoseLandmarker } from "@/lib/vision/poseLandmarker";
 import { landmarksToKeypoints } from "@/lib/vision/landmarks";
 import { buildCapture } from "@/lib/vision/buildCapture";
-import { isVisible } from "@/lib/vision/visibility";
+import { isVisible, isVisibleForFraming } from "@/lib/vision/visibility";
 import type { PoseFrame, ShotCapture } from "@/lib/contracts";
 
 export interface CaptureViewProps {
@@ -63,15 +63,27 @@ const LM = {
   lHip: 23, rHip: 24, lKnee: 25, rKnee: 26, lAnkle: 27, rAnkle: 28,
 };
 
-/** A clean side-on full-body framing: both shoulders + both hips + at least one
- *  full leg (hip->knee->ankle) and one full arm (shoulder->elbow->wrist). */
+/** Side-on framing gate — tuned for laptop demos (closer than "ten feet back").
+ *  Torso: both hips + at least one shoulder. Arm: one full chain. Leg: hip→knee;
+ *  ankle optional when the knee is low (feet often clip before MediaPipe sees them). */
 function isCapturable(landmarks: NormalizedLandmark[]): boolean {
-  const v = (i: number) => Boolean(landmarks[i] && isVisible(landmarks[i]));
-  const shoulders = v(LM.lShoulder) && v(LM.rShoulder);
-  const hips = v(LM.lHip) && v(LM.rHip);
-  const leg = (v(LM.lHip) && v(LM.lKnee) && v(LM.lAnkle)) || (v(LM.rHip) && v(LM.rKnee) && v(LM.rAnkle));
-  const arm = (v(LM.lShoulder) && v(LM.lElbow) && v(LM.lWrist)) || (v(LM.rShoulder) && v(LM.rElbow) && v(LM.rWrist));
-  return shoulders && hips && leg && arm;
+  const v = (i: number) => Boolean(landmarks[i] && isVisibleForFraming(landmarks[i]));
+
+  const torso = v(LM.lHip) && v(LM.rHip) && (v(LM.lShoulder) || v(LM.rShoulder));
+  const arm =
+    (v(LM.lShoulder) && v(LM.lElbow) && v(LM.lWrist)) ||
+    (v(LM.rShoulder) && v(LM.rElbow) && v(LM.rWrist));
+
+  const legOk = (hip: number, knee: number, ankle: number) => {
+    if (!v(hip) || !v(knee)) return false;
+    if (v(ankle)) return true;
+    const kneeLm = landmarks[knee];
+    return kneeLm.y >= 0.5;
+  };
+  const leg =
+    legOk(LM.lHip, LM.lKnee, LM.lAnkle) || legOk(LM.rHip, LM.rKnee, LM.rAnkle);
+
+  return torso && arm && leg;
 }
 
 export function CaptureView({ onCapture, className }: CaptureViewProps) {
@@ -253,9 +265,10 @@ export function CaptureView({ onCapture, className }: CaptureViewProps) {
 
         {ready && !capturable && !recording && phase === "idle" && (
           <div className="pointer-events-none absolute inset-0 flex items-end justify-center p-6 pb-8">
-            <p className="max-w-xs rounded-lg bg-black/80 px-4 py-3 text-center text-sm font-medium text-white">
-              Step back so your whole body is in frame. Stand side-on to the
-              camera — recording starts on its own once you&apos;re set.
+            <p className="max-w-sm rounded-lg bg-black/80 px-4 py-3 text-center text-sm font-medium text-white">
+              Stand side-on, about an arm&apos;s length from the screen. Get your
+              hips and knees in frame — feet can sit near the bottom edge.
+              Recording starts on its own once you&apos;re set.
             </p>
           </div>
         )}

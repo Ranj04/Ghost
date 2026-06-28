@@ -12,6 +12,7 @@ import {
   drawBall,
   drawFlawMarker,
   drawGhostLines,
+  drawHoop,
   drawPlayer,
   drawShotArc,
   drawVignette,
@@ -59,6 +60,16 @@ export function GhostOverlay({ result, width = 440, height = 560, className, com
   const flawKeys = useMemo(() => (flawJoint ? flawConnectionKeys(flawJoint) : new Set<string>()), [flawJoint]);
   const shootWrist = `${side}_wrist`;
 
+  // Release point + a hoop the shot arcs into (normalized coords).
+  const releaseWrist = useMemo(
+    () => frames[releaseIndex]?.keypoints.find((k) => k.name === shootWrist) ?? null,
+    [frames, releaseIndex, shootWrist],
+  );
+  const hoop = useMemo(
+    () => (releaseWrist ? { x: releaseWrist.x + 0.3, y: releaseWrist.y - 0.05 } : null),
+    [releaseWrist],
+  );
+
   const [playing, setPlaying] = useState(true);
   const [index, setIndex] = useState(0);
   const playingRef = useRef(playing);
@@ -81,12 +92,24 @@ export function GhostOverlay({ result, width = 440, height = 560, className, com
     };
     for (const f of frames) consider(f.keypoints);
     for (const g of ghostFrames) consider(g.keypoints);
+    // Include the hoop + shot arc so the whole shot stays in frame.
+    if (releaseWrist && hoop) {
+      for (let s = 0; s <= 10; s++) {
+        const p = s / 10;
+        const ax = releaseWrist.x + (hoop.x - releaseWrist.x) * p;
+        const ay = releaseWrist.y + (hoop.y - releaseWrist.y) * p - 0.2 * 4 * p * (1 - p);
+        if (ax < minX) minX = ax;
+        if (ax > maxX) maxX = ax;
+        if (ay < minY) minY = ay;
+        if (ay > maxY) maxY = ay;
+      }
+    }
     if (!Number.isFinite(minX)) return { s: 1, cx: width / 2, cy: height / 2 };
     const bwPx = Math.max(1, (maxX - minX) * width);
     const bhPx = Math.max(1, (maxY - minY) * height);
     const s = Math.max(0.9, Math.min(2.8, Math.min((width * 0.7) / bwPx, (height * 0.82) / bhPx)));
     return { s, cx: ((minX + maxX) / 2) * width, cy: ((minY + maxY) / 2) * height };
-  }, [frames, ghostFrames, width, height]);
+  }, [frames, ghostFrames, releaseWrist, hoop, width, height]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -115,16 +138,21 @@ export function GhostOverlay({ result, width = 440, height = 560, className, com
       return lerpFrame(arr[a], arr[b], pos - a);
     };
 
-    // Ball position (normalized): in the hand until release, then a parabolic arc.
+    // Shot arc from the release point into the hoop (apex above the chord).
+    const arcPoint = (p: number): { x: number; y: number } | null => {
+      if (!releaseWrist || !hoop) return null;
+      return {
+        x: releaseWrist.x + (hoop.x - releaseWrist.x) * p,
+        y: releaseWrist.y + (hoop.y - releaseWrist.y) * p - 0.2 * 4 * p * (1 - p),
+      };
+    };
+    // Ball position (normalized): in the hand until release, then along the arc.
     const ballAt = (pos: number, userFrame: PoseFrame): { x: number; y: number } | null => {
       if (pos <= releaseIndex) {
         const k = userFrame.keypoints.find((p) => p.name === shootWrist && isVisible(p));
         return k ? { x: k.x, y: k.y } : null;
       }
-      const rel = frames[releaseIndex].keypoints.find((p) => p.name === shootWrist);
-      if (!rel) return null;
-      const p = (pos - releaseIndex) / Math.max(1, total - 1 - releaseIndex);
-      return { x: rel.x + 0.26 * p, y: rel.y - 0.7 * p + 0.85 * p * p };
+      return arcPoint((pos - releaseIndex) / Math.max(1, total - 1 - releaseIndex));
     };
 
     const draw = (pos: number, now: number) => {
@@ -140,22 +168,25 @@ export function GhostOverlay({ result, width = 440, height = 560, className, com
       ctx.translate(-fit.cx, -fit.cy);
       if (ghost) drawGhostLines(ctx, ghost, width, height, intro);
       drawPlayer(ctx, user, width, height, flawKeys);
-      // Glowing shot-arc tracer along the ball's flight path.
-      if (pos > releaseIndex) {
-        const rel = frames[releaseIndex].keypoints.find((p) => p.name === shootWrist);
-        if (rel) {
-          const curP = (pos - releaseIndex) / Math.max(1, total - 1 - releaseIndex);
-          const steps = 16;
-          const pts: { x: number; y: number }[] = [];
-          for (let s = 0; s <= steps; s++) {
-            const p = curP * (s / steps);
-            pts.push({ x: (rel.x + 0.26 * p) * width, y: (rel.y - 0.7 * p + 0.85 * p * p) * height });
-          }
-          drawShotArc(ctx, pts);
+      const ballR = Math.max(7, torsoLengthPx(user, width, height) * 0.17);
+      const curP = pos > releaseIndex ? (pos - releaseIndex) / Math.max(1, total - 1 - releaseIndex) : 0;
+      // Hoop (target) — brightens with the swish ripple as the ball drops in.
+      if (hoop) {
+        const swish = curP <= 0.9 ? 0 : (curP - 0.9) / 0.1;
+        drawHoop(ctx, hoop.x * width, hoop.y * height, ballR * 1.7, swish);
+      }
+      // Glowing shot-arc tracer along the ball's flight path into the hoop.
+      if (pos > releaseIndex && hoop) {
+        const steps = 16;
+        const pts: { x: number; y: number }[] = [];
+        for (let s = 0; s <= steps; s++) {
+          const a = arcPoint(curP * (s / steps));
+          if (a) pts.push({ x: a.x * width, y: a.y * height });
         }
+        drawShotArc(ctx, pts);
       }
       const ball = ballAt(pos, user);
-      if (ball) drawBall(ctx, ball.x * width, ball.y * height, Math.max(7, torsoLengthPx(user, width, height) * 0.17));
+      if (ball) drawBall(ctx, ball.x * width, ball.y * height, ballR);
       if (flawJoint && pos >= releaseIndex - 1) {
         const pulse = reduced ? 0.5 : 0.5 + 0.5 * Math.sin(now / 420);
         drawFlawMarker(ctx, user, width, height, flawJoint, pulse);
