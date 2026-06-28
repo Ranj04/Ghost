@@ -1,17 +1,19 @@
 # Ownership Map
 
-Two people build Ghost in parallel off `main`. Stay inside your folders.
-Anything under **SHARED — FROZEN** requires a NOTIFY PARTNER gate before editing.
+Two people build Ghost in parallel. There are **no feature branches** — both
+partners commit directly to `main` and `git pull --rebase origin main` before
+every push. Stay inside your folders. Anything under **SHARED — FROZEN**
+requires a NOTIFY PARTNER gate before editing.
 
 ```
-PERSON A (Ranjiv) — branch feat/vision-core — owns:
+PERSON A (Ranjiv) — works on main — owns:
   src/lib/vision/**      (pose capture, release detection)
   src/lib/analysis/**    (metrics, reference alignment, flaw detection, scoring)
-  src/lib/coach/**       (You.com + Tavily retrieval)
+  src/lib/coach/**       (You.com + Tavily retrieval + Nebius generation)
   src/components/capture/**
   src/components/overlay/**
 
-PERSON B (Partner) — branch feat/platform — owns:
+PERSON B (Partner) — works on main — owns:
   src/app/**             (routing, pages, layout)
   src/lib/db/**          (InsForge auth + persistence)
   src/lib/payments/**    (Kite PvP stake)

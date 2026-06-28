@@ -1,2 +1,2 @@
-// Stub barrel — owned by PERSON A (feat/vision-core). See OWNERSHIP.md.
+// Stub barrel — owned by PERSON A (works on main). See OWNERSHIP.md.
 export {};
