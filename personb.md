@@ -48,7 +48,7 @@ Two parts. Part 1 is required and quick. Part 2 is a HARD-CAPPED stretch — onl
 **Part 2 — Nebius reference-builder (STRETCH, 90-min hard cap):**
 The ghost reference is a hardcoded exemplar — the soft spot a judge pokes with "whose form is that?". Use Nebius serverless GPU (a Job/DevPod per Nebius docs — container, pick a GPU, run) to process a few real shooter clips with a heavier/3D pose model OFFLINE and generate improved reference keypoint data.
 - Output to `fixtures/reference/generated/` — do NOT overwrite the existing `fixtures/reference/` in place (Ranjiv's thresholds are tuned to it). Adoption is a joint call at integration.
-- If the GPU job won't work within the cap, keep the hardcoded reference, note in the architecture doc that the builder is designed but the demo uses the curated reference. Don't fake generated data.
+- If the GPU job won't work within the cap, STOP, keep the hardcoded reference, note in the architecture doc that the builder is designed but the demo uses the curated reference. Don't fake generated data.
 
 **VERIFY:** Part 1 — live Vercel URL serves the app. Part 2 (if attempted) — `fixtures/reference/generated/` has valid `PoseFrame[]` JSON parsing against the contract.
 **COMMIT + PUSH:** stage owned files, commit `feat(deploy): vercel frontend` (+ `feat(nebius): reference-builder job` if done), `git pull --rebase origin main`, `git push origin main`.
