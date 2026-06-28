@@ -82,24 +82,89 @@ export function resolvableConnections(frame: PoseFrame): number {
   return POSE_CONNECTIONS_BY_NAME.filter(([a, b]) => map.has(a) && map.has(b)).length;
 }
 
-function strokeBones(ctx: CanvasRenderingContext2D, map: Map<string, PxPoint>): void {
-  for (const [a, b] of POSE_CONNECTIONS_BY_NAME) {
-    const pa = map.get(a);
-    const pb = map.get(b);
-    if (pa && pb) {
-      ctx.beginPath();
-      ctx.moveTo(pa.x, pa.y);
-      ctx.lineTo(pb.x, pb.y);
-      ctx.stroke();
-    }
-  }
-}
-
 function disc(ctx: CanvasRenderingContext2D, p: PxPoint | undefined, r: number): void {
   if (!p) return;
   ctx.beginPath();
   ctx.arc(p.x, p.y, r, 0, Math.PI * 2);
   ctx.fill();
+}
+
+/** A tapered limb: trapezoid between two joints + a rounding disc at each end. */
+function limb(ctx: CanvasRenderingContext2D, a?: PxPoint, b?: PxPoint, ra = 6, rb = 5): void {
+  if (!a || !b) return;
+  const dx = b.x - a.x;
+  const dy = b.y - a.y;
+  const len = Math.hypot(dx, dy) || 1;
+  const nx = -dy / len;
+  const ny = dx / len;
+  ctx.beginPath();
+  ctx.moveTo(a.x + nx * ra, a.y + ny * ra);
+  ctx.lineTo(b.x + nx * rb, b.y + ny * rb);
+  ctx.lineTo(b.x - nx * rb, b.y - ny * rb);
+  ctx.lineTo(a.x - nx * ra, a.y - ny * ra);
+  ctx.closePath();
+  ctx.fill();
+  disc(ctx, a, ra);
+  disc(ctx, b, rb);
+}
+
+/** A soft rounded polygon (quadratic curves through edge midpoints). */
+function roundedPolygon(ctx: CanvasRenderingContext2D, pts: PxPoint[]): void {
+  if (pts.length < 3) return;
+  const m = (p: PxPoint, q: PxPoint) => ({ x: (p.x + q.x) / 2, y: (p.y + q.y) / 2 });
+  const startMid = m(pts[pts.length - 1], pts[0]);
+  ctx.beginPath();
+  ctx.moveTo(startMid.x, startMid.y);
+  for (let i = 0; i < pts.length; i++) {
+    const cur = pts[i];
+    const next = m(pts[i], pts[(i + 1) % pts.length]);
+    ctx.quadraticCurveTo(cur.x, cur.y, next.x, next.y);
+  }
+  ctx.closePath();
+  ctx.fill();
+}
+
+/** Fill an anatomically-proportioned body (opaque, current fillStyle) from the
+ *  VISIBLE keypoints — tapered limbs + a rounded torso union into one smooth
+ *  silhouette when composited once. */
+function fillBody(ctx: CanvasRenderingContext2D, frame: PoseFrame, w: number, h: number): void {
+  const map = pxMap(frame, w, h);
+  const T = torsoScale(map, w, h);
+  const P = (n: string) => map.get(n);
+  const ls = P("left_shoulder");
+  const rs = P("right_shoulder");
+  const lh = P("left_hip");
+  const rh = P("right_hip");
+
+  if (ls && rs && rh && lh) roundedPolygon(ctx, [ls, rs, rh, lh]);
+  disc(ctx, ls, 0.1 * T);
+  disc(ctx, rs, 0.1 * T);
+  disc(ctx, lh, 0.095 * T);
+  disc(ctx, rh, 0.095 * T);
+
+  limb(ctx, ls, P("left_elbow"), 0.08 * T, 0.065 * T);
+  limb(ctx, P("left_elbow"), P("left_wrist"), 0.065 * T, 0.048 * T);
+  limb(ctx, rs, P("right_elbow"), 0.08 * T, 0.065 * T);
+  limb(ctx, P("right_elbow"), P("right_wrist"), 0.065 * T, 0.048 * T);
+  limb(ctx, lh, P("left_knee"), 0.115 * T, 0.085 * T);
+  limb(ctx, P("left_knee"), P("left_ankle"), 0.085 * T, 0.06 * T);
+  limb(ctx, rh, P("right_knee"), 0.115 * T, 0.085 * T);
+  limb(ctx, P("right_knee"), P("right_ankle"), 0.085 * T, 0.06 * T);
+
+  disc(ctx, P("left_wrist"), 0.048 * T);
+  disc(ctx, P("right_wrist"), 0.048 * T);
+  disc(ctx, P("left_ankle"), 0.055 * T);
+  disc(ctx, P("right_ankle"), 0.055 * T);
+
+  const sc = midpoint(ls, rs);
+  const nose = P("nose");
+  if (sc) {
+    const headC = nose ?? { x: sc.x, y: sc.y - 0.5 * T };
+    limb(ctx, sc, { x: headC.x, y: headC.y + 0.12 * T }, 0.055 * T, 0.06 * T);
+    ctx.beginPath();
+    ctx.ellipse(headC.x, headC.y, T * 0.13, T * 0.16, 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
 }
 
 /** Dark gym stage: deep radial ink + faint aqua floor glow. */
@@ -127,42 +192,32 @@ export function drawVignette(ctx: CanvasRenderingContext2D, w: number, h: number
   ctx.fillRect(0, 0, w, h);
 }
 
-/** The IDEAL: a luminous aqua light-figure (glowing tubes + bright core).
+export interface Offscreen {
+  canvas: HTMLCanvasElement;
+  ctx: CanvasRenderingContext2D;
+}
+
+/** The IDEAL: a luminous aqua FILLED silhouette. The body is filled opaque on an
+ *  offscreen buffer, then stamped once at low opacity with an outer glow — so
+ *  overlapping limbs union into a smooth hologram (no seams, no tube-lines).
+ *  Stamped within the caller's fit transform, so it aligns with the player.
  *  `intro` (0..1) fades it in. */
-export function drawGhostFigure(ctx: CanvasRenderingContext2D, frame: PoseFrame, w: number, h: number, intro = 1): void {
-  const map = pxMap(frame, w, h);
-  const T = torsoScale(map, w, h);
-  const tube = Math.max(7, Math.min(16, T * 0.12));
-  const nose = map.get("nose");
+export function drawGhostSilhouette(main: CanvasRenderingContext2D, off: Offscreen, frame: PoseFrame, w: number, h: number, intro = 1): void {
+  off.ctx.clearRect(0, 0, w, h);
+  off.ctx.fillStyle = GHOST;
+  fillBody(off.ctx, frame, w, h);
 
-  ctx.save();
-  ctx.globalAlpha = intro;
-  ctx.lineCap = "round";
-  ctx.lineJoin = "round";
-
-  // Outer glow tube.
-  ctx.strokeStyle = "rgba(79, 214, 224, 0.45)";
-  ctx.shadowColor = GHOST;
-  ctx.shadowBlur = 24;
-  ctx.lineWidth = tube;
-  strokeBones(ctx, map);
-  if (nose) {
-    ctx.beginPath();
-    ctx.arc(nose.x, nose.y, Math.max(10, T * 0.18), 0, Math.PI * 2);
-    ctx.stroke();
-  }
-
-  // Bright inner core.
-  ctx.shadowBlur = 8;
-  ctx.strokeStyle = "rgba(190, 247, 252, 0.9)";
-  ctx.lineWidth = Math.max(2, tube * 0.34);
-  strokeBones(ctx, map);
-  if (nose) {
-    ctx.beginPath();
-    ctx.arc(nose.x, nose.y, Math.max(10, T * 0.18), 0, Math.PI * 2);
-    ctx.stroke();
-  }
-  ctx.restore();
+  main.save();
+  // Two stamps: a soft wide glow, then a slightly crisper body — reads as a
+  // luminous hologram with presence without looking solid.
+  main.shadowColor = GHOST;
+  main.globalAlpha = 0.16 * intro;
+  main.shadowBlur = 34;
+  main.drawImage(off.canvas, 0, 0, off.canvas.width, off.canvas.height, 0, 0, w, h);
+  main.globalAlpha = 0.22 * intro;
+  main.shadowBlur = 14;
+  main.drawImage(off.canvas, 0, 0, off.canvas.width, off.canvas.height, 0, 0, w, h);
+  main.restore();
 }
 
 /** YOU: a crisp bone-white skeleton. Bones in `flawKeys` render coral. */
@@ -205,8 +260,17 @@ export function drawPlayerSkeleton(ctx: CanvasRenderingContext2D, frame: PoseFra
   ctx.restore();
 }
 
-/** The single deviation: coral marker on your flawed joint + a thin dashed
- *  connector to where the ideal joint sits (the gap). Minimal, no labels. */
+const CHILD_JOINT: Record<string, string> = {
+  right_shoulder: "right_elbow", left_shoulder: "left_elbow",
+  right_elbow: "right_wrist", left_elbow: "left_wrist",
+  right_wrist: "right_elbow", left_wrist: "left_elbow",
+  right_hip: "right_knee", left_hip: "left_knee",
+  right_knee: "right_ankle", left_knee: "left_ankle",
+};
+
+/** The single deviation: coral marker on your flawed joint, a thin dashed
+ *  connector to where the ideal joint sits, and a small arc showing the angular
+ *  gap between your bone and the ideal bone. One flaw only — no clutter. */
 export function drawDeviation(ctx: CanvasRenderingContext2D, userFrame: PoseFrame, ghostFrame: PoseFrame, w: number, h: number, joint: string, pulse: number): void {
   const um = pxMap(userFrame, w, h);
   const gm = pxMap(ghostFrame, w, h);
@@ -235,6 +299,26 @@ export function drawDeviation(ctx: CanvasRenderingContext2D, userFrame: PoseFram
     ctx.beginPath();
     ctx.arc(gj.x, gj.y, Math.max(4, T * 0.05), 0, Math.PI * 2);
     ctx.stroke();
+  }
+
+  // Angle-delta arc: the sweep between your bone and the ideal bone direction.
+  const childName = CHILD_JOINT[joint];
+  const uc = childName ? um.get(childName) : undefined;
+  const gc = childName ? gm.get(childName) : undefined;
+  if (uc && gc && gj) {
+    const a1 = Math.atan2(uc.y - uj.y, uc.x - uj.x);
+    const a2 = Math.atan2(gc.y - gj.y, gc.x - gj.x);
+    let d = a2 - a1;
+    while (d > Math.PI) d -= 2 * Math.PI;
+    while (d < -Math.PI) d += 2 * Math.PI;
+    if (Math.abs(d) > 0.05) {
+      ctx.globalAlpha = 0.85;
+      ctx.lineWidth = 2.5;
+      ctx.shadowBlur = 10;
+      ctx.beginPath();
+      ctx.arc(uj.x, uj.y, Math.max(14, T * 0.26), a1, a1 + d, d < 0);
+      ctx.stroke();
+    }
   }
 
   ctx.globalAlpha = 1;

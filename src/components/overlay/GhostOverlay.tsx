@@ -10,11 +10,12 @@ import type { AnalysisResult } from "@/lib/contracts";
 import {
   drawBackdrop,
   drawDeviation,
-  drawGhostFigure,
+  drawGhostSilhouette,
   drawPlayerSkeleton,
   drawVignette,
   flawConnectionKeys,
   jointsForFlaw,
+  type Offscreen,
 } from "./skeleton";
 
 export interface GhostOverlayProps {
@@ -28,6 +29,7 @@ const easeOutCubic = (t: number) => 1 - Math.pow(1 - t, 3);
 
 export function GhostOverlay({ result, width = 440, height = 560, className }: GhostOverlayProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const offRef = useRef<Offscreen | null>(null);
   const frames = result.capture.frames;
   const total = frames.length;
   const fps = Math.max(1, result.capture.fps);
@@ -86,6 +88,15 @@ export function GhostOverlay({ result, width = 440, height = 560, className }: G
     canvas.style.width = `${width}px`;
     canvas.style.height = `${height}px`;
     canvas.getContext("2d")?.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    const offCanvas = document.createElement("canvas");
+    offCanvas.width = width * dpr;
+    offCanvas.height = height * dpr;
+    const offCtx = offCanvas.getContext("2d");
+    if (offCtx) {
+      offCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      offRef.current = { canvas: offCanvas, ctx: offCtx };
+    }
   }, [width, height]);
 
   useEffect(() => {
@@ -108,7 +119,7 @@ export function GhostOverlay({ result, width = 440, height = 560, className }: G
       ctx.translate(width / 2, height / 2);
       ctx.scale(fit.s, fit.s);
       ctx.translate(-fit.cx, -fit.cy);
-      if (ghost) drawGhostFigure(ctx, ghost, width, height, intro);
+      if (ghost && offRef.current) drawGhostSilhouette(ctx, offRef.current, ghost, width, height, intro);
       if (user) {
         drawPlayerSkeleton(ctx, user, width, height, flawKeys);
         if (ghost && flawJoint) {

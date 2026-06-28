@@ -3,7 +3,7 @@ export { GhostOverlay, type GhostOverlayProps } from "./GhostOverlay";
 export {
   drawBackdrop,
   drawVignette,
-  drawGhostFigure,
+  drawGhostSilhouette,
   drawPlayerSkeleton,
   drawDeviation,
   flawConnectionKeys,
@@ -11,4 +11,5 @@ export {
   resolvableConnections,
   POSE_CONNECTIONS_BY_NAME,
   JOINT_NAMES,
+  type Offscreen,
 } from "./skeleton";
