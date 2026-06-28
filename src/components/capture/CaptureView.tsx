@@ -31,48 +31,6 @@ export function CaptureView({ onCapture, className }: CaptureViewProps) {
   const [recording, setRecording] = useState(false);
   const [initError, setInitError] = useState<string | null>(null);
 
-  const loop = useCallback(() => {
-    const video = videoRef.current;
-    const canvas = canvasRef.current;
-    const lm = landmarkerRef.current;
-    if (!video || !canvas || !lm || video.readyState < 2) {
-      rafRef.current = requestAnimationFrame(loop);
-      return;
-    }
-    if (canvas.width !== video.videoWidth || canvas.height !== video.videoHeight) {
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-    }
-    const ctx = canvas.getContext("2d");
-    if (!ctx) {
-      rafRef.current = requestAnimationFrame(loop);
-      return;
-    }
-    if (!drawingRef.current) drawingRef.current = new DrawingUtils(ctx);
-
-    const nowMs = performance.now();
-    if (video.currentTime !== lastVideoTimeRef.current) {
-      lastVideoTimeRef.current = video.currentTime;
-      const result = lm.detectForVideo(video, nowMs);
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      const landmarks = result.landmarks?.[0] as NormalizedLandmark[] | undefined;
-      if (landmarks) {
-        drawingRef.current.drawConnectors(landmarks, PoseLandmarker.POSE_CONNECTIONS, {
-          color: "#22d3ee",
-          lineWidth: 3,
-        });
-        drawingRef.current.drawLandmarks(landmarks, { color: "#f43f5e", radius: 3 });
-        if (recordingRef.current) {
-          bufferRef.current.push({
-            t: nowMs - recordStartRef.current,
-            keypoints: landmarksToKeypoints(landmarks),
-          });
-        }
-      }
-    }
-    rafRef.current = requestAnimationFrame(loop);
-  }, [videoRef]);
-
   // Initialize camera + pose model once.
   useEffect(() => {
     let cancelled = false;
@@ -96,14 +54,50 @@ export function CaptureView({ onCapture, className }: CaptureViewProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Drive the detection loop once ready.
+  // Drive the detection loop once ready. Defined locally so it can recurse via
+  // requestAnimationFrame without a self-referential useCallback.
   useEffect(() => {
     if (!ready) return;
-    rafRef.current = requestAnimationFrame(loop);
-    return () => {
-      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    let raf = 0;
+    const loop = () => {
+      raf = requestAnimationFrame(loop);
+      rafRef.current = raf;
+      const video = videoRef.current;
+      const canvas = canvasRef.current;
+      const lm = landmarkerRef.current;
+      if (!video || !canvas || !lm || video.readyState < 2) return;
+      if (canvas.width !== video.videoWidth || canvas.height !== video.videoHeight) {
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+      }
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return;
+      if (!drawingRef.current) drawingRef.current = new DrawingUtils(ctx);
+
+      const nowMs = performance.now();
+      if (video.currentTime !== lastVideoTimeRef.current) {
+        lastVideoTimeRef.current = video.currentTime;
+        const result = lm.detectForVideo(video, nowMs);
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        const landmarks = result.landmarks?.[0] as NormalizedLandmark[] | undefined;
+        if (landmarks) {
+          drawingRef.current.drawConnectors(landmarks, PoseLandmarker.POSE_CONNECTIONS, {
+            color: "#22d3ee",
+            lineWidth: 3,
+          });
+          drawingRef.current.drawLandmarks(landmarks, { color: "#f43f5e", radius: 3 });
+          if (recordingRef.current) {
+            bufferRef.current.push({
+              t: nowMs - recordStartRef.current,
+              keypoints: landmarksToKeypoints(landmarks),
+            });
+          }
+        }
+      }
     };
-  }, [ready, loop]);
+    raf = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(raf);
+  }, [ready, videoRef]);
 
   const toggleRecording = useCallback(() => {
     if (recordingRef.current) {
