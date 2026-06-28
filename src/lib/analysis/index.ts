@@ -1,9 +1,6 @@
 // PERSON A (works on main) — analysis module public surface. See OWNERSHIP.md.
+//
+// Integration surface: analyzeShot is the contract entry point Person B consumes.
+// detectShootingSide is exposed for the ghost overlay's flaw-joint highlighting.
 export { analyzeShot } from "./analyzeShot";
-export { detectRelease, detectShootingSide, type Side } from "./detectRelease";
-export { extractMetrics } from "./extractMetrics";
-export { detectFlaws, scoreForm, type FlawResult } from "./flaws";
-export { alignToReference } from "./align";
-export { normalize, normalizeFrame, hipCenter, shoulderCenter, torsoLength } from "./normalize";
-export { REFERENCE_FRAMES, REFERENCE_CAPTURE, REFERENCE_METRICS } from "./reference";
-export { angleDeg, dist, kp, type Pt } from "./geometry";
+export { detectShootingSide, type Side } from "./detectRelease";

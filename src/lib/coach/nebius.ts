@@ -1,7 +1,6 @@
 // Nebius Token Factory generation: write the personalized coaching note from the
 // retrieved drill + sources + the flaw's actual numbers, using an OpenAI-compatible
 // hosted open model. The note must stay grounded in what was retrieved.
-import OpenAI from "openai";
 import type { Drill, Flaw, Reference } from "../contracts";
 
 const DEFAULT_BASE_URL = "https://api.tokenfactory.nebius.com/v1/";
@@ -31,6 +30,9 @@ function metricLine(flaw: Flaw): string {
 /** Live generation via Nebius. Throws on failure so the caller can fall back. */
 export async function generateCoachingNote({ flaw, drill, references }: GenerateArgs): Promise<string> {
   const { model, endpoint } = nebiusInfo();
+  // Lazy import so the OpenAI SDK only loads on the live path (keeps it out of
+  // any client bundle that imports coachFlaw in curated mode).
+  const { default: OpenAI } = await import("openai");
   const client = new OpenAI({ apiKey: process.env.NEBIUS_API_KEY, baseURL: endpoint });
 
   const sources = references.map((r) => `- ${r.title}: ${r.url}`).join("\n");
