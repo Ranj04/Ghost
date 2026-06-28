@@ -219,7 +219,7 @@ export function GhostOverlay({ result, width = 440, height = 560, className, com
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, [result, frames, ghostFrames, total, fps, releaseIndex, flawKeys, flawJoint, shootWrist, fit, width, height]);
+  }, [result, frames, ghostFrames, total, fps, releaseIndex, flawKeys, flawJoint, shootWrist, releaseWrist, hoop, fit, width, height]);
 
   const releasePct = total > 1 ? (releaseIndex / (total - 1)) * 100 : 0;
   const posPct = total > 1 ? (index / (total - 1)) * 100 : 0;
