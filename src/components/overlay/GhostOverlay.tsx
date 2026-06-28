@@ -68,9 +68,12 @@ export function GhostOverlay({ result, width = 440, height = 560, className }: G
     };
     for (const f of frames) consider(f.keypoints);
     for (const g of result.ghostRef) consider(g.keypoints);
+    if (!Number.isFinite(minX)) return { s: 1, cx: width / 2, cy: height / 2 };
     const bw = Math.max(1, maxX - minX);
     const bh = Math.max(1, maxY - minY);
-    const s = Math.max(0.9, Math.min(2.6, Math.min((width * 0.66) / bw, (height * 0.84) / bh)));
+    // Scale the body to ~80% of canvas height (and never wider than the canvas),
+    // then center it. Same transform is applied to both you and the ghost.
+    const s = Math.max(0.9, Math.min(2.8, Math.min((width * 0.78) / bw, (height * 0.8) / bh)));
     return { s, cx: (minX + maxX) / 2, cy: (minY + maxY) / 2 };
   }, [frames, result.ghostRef, width, height]);
 
