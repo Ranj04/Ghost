@@ -13,15 +13,15 @@ export default function Home() {
         <section>
           <Badge
             variant="outline"
-            className="h-7 border-black/10 bg-white/70 px-3 backdrop-blur"
+            className="h-7 border-white/10 bg-white/5 px-3 backdrop-blur"
           >
-            <Sparkles className="text-[#799600]" />
+            <Sparkles className="text-[#5aa0ff]" />
             AI basketball form coach
           </Badge>
           <h1 className="mt-7 max-w-3xl text-6xl font-semibold leading-[0.95] tracking-[-0.065em] sm:text-7xl">
             See the shot
             <br />
-            <span className="text-[#799600]">you can’t feel.</span>
+            <span className="text-[#5aa0ff]">you can’t feel.</span>
           </h1>
           <p className="mt-7 max-w-xl text-lg leading-8 text-muted-foreground">
             Ghost turns one video into measured mechanics, a visual reference,
@@ -31,7 +31,7 @@ export default function Home() {
             <Link
               className={cn(
                 buttonVariants(),
-                "h-12 rounded-full bg-[#101513] px-6 text-white hover:bg-[#26302c]",
+                "h-12 rounded-full bg-[#2e86ff] px-6 font-medium text-[#04080f] hover:bg-[#1e6fe0]",
               )}
               href="/capture"
             >
@@ -41,7 +41,7 @@ export default function Home() {
             <Link
               className={cn(
                 buttonVariants({ variant: "outline" }),
-                "h-12 rounded-full bg-white/60 px-6",
+                "h-12 rounded-full bg-white/5 px-6",
               )}
               href="/results"
             >
@@ -50,31 +50,31 @@ export default function Home() {
           </div>
           <div className="mt-11 flex flex-wrap gap-x-7 gap-y-3 text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">
             <span className="flex items-center gap-2">
-              <ScanLine className="size-4 text-[#799600]" />
+              <ScanLine className="size-4 text-[#5aa0ff]" />
               Pose tracked
             </span>
             <span className="flex items-center gap-2">
-              <Crosshair className="size-4 text-[#799600]" />
+              <Crosshair className="size-4 text-[#5aa0ff]" />
               Reference aligned
             </span>
           </div>
         </section>
 
         <section className="relative mx-auto w-full max-w-lg">
-          <div className="absolute -inset-8 -z-10 rounded-full bg-[#d9ff43]/20 blur-3xl" />
-          <div className="rotate-2 rounded-[2.2rem] border border-white/10 bg-[#101513] p-3 shadow-2xl shadow-black/20">
-            <div className="relative aspect-[4/5] overflow-hidden rounded-[1.65rem] bg-[#181e1b]">
+          <div className="absolute -inset-8 -z-10 rounded-full bg-[#2e86ff]/20 blur-3xl" />
+          <div className="rotate-2 rounded-[2.2rem] border border-white/10 bg-[#101a2b] p-3 shadow-2xl shadow-black/20">
+            <div className="relative aspect-[4/5] overflow-hidden rounded-[1.65rem] bg-[#16202f]">
               <div className="capture-grid absolute inset-0 opacity-20" />
               <div className="absolute left-5 top-5 flex items-center gap-2 rounded-full bg-black/35 px-3 py-1.5 text-xs text-white/70 backdrop-blur">
                 <span className="size-2 rounded-full bg-red-400" />
                 Shot 01 · side view
               </div>
               <div className="absolute inset-x-[31%] top-[18%] h-[60%]">
-                <div className="absolute left-[42%] top-0 size-14 rounded-full border-2 border-[#d9ff43] bg-[#d9ff43]/10" />
-                <div className="absolute left-1/2 top-[13%] h-[42%] w-0.5 -translate-x-1/2 rotate-3 bg-[#d9ff43]" />
-                <div className="absolute left-[26%] top-[21%] h-0.5 w-[55%] rotate-[-25deg] bg-[#d9ff43]" />
-                <div className="absolute left-[49%] top-[54%] h-[44%] w-0.5 rotate-[18deg] bg-[#d9ff43]" />
-                <div className="absolute left-[49%] top-[54%] h-[44%] w-0.5 rotate-[-22deg] bg-[#d9ff43]" />
+                <div className="absolute left-[42%] top-0 size-14 rounded-full border-2 border-[#2e86ff] bg-[#2e86ff]/10" />
+                <div className="absolute left-1/2 top-[13%] h-[42%] w-0.5 -translate-x-1/2 rotate-3 bg-[#2e86ff]" />
+                <div className="absolute left-[26%] top-[21%] h-0.5 w-[55%] rotate-[-25deg] bg-[#2e86ff]" />
+                <div className="absolute left-[49%] top-[54%] h-[44%] w-0.5 rotate-[18deg] bg-[#2e86ff]" />
+                <div className="absolute left-[49%] top-[54%] h-[44%] w-0.5 rotate-[-22deg] bg-[#2e86ff]" />
               </div>
               <div className="absolute inset-x-5 bottom-5 rounded-2xl border border-white/10 bg-black/45 p-4 text-white backdrop-blur">
                 <div className="flex items-end justify-between">
@@ -86,7 +86,7 @@ export default function Home() {
                       78
                     </strong>
                   </div>
-                  <Badge className="bg-[#d9ff43] text-[#10130b]">
+                  <Badge className="bg-[#2e86ff] text-[#f4f1e8]">
                     Elbow flare
                   </Badge>
                 </div>

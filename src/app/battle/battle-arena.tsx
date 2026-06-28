@@ -147,7 +147,7 @@ export function BattleArena() {
 
   return (
     <div className="space-y-6">
-      <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-950">
+      <div className="rounded-2xl border border-[#ff6a1a]/30 bg-[#ff6a1a]/10 p-4 text-sm leading-6 text-[#ffd2b3]">
         <strong>Settlement mode: labeled simulation.</strong> Kite Passport
         requires a funded wallet and passkey-approved spending session. Neither
         is configured here, so no transaction will be submitted and no tx hash
@@ -163,7 +163,7 @@ export function BattleArena() {
           player={players[0]}
         />
         <div className="grid place-items-center">
-          <span className="grid size-12 place-items-center rounded-full bg-[#101513] text-[#d9ff43]">
+          <span className="grid size-12 place-items-center rounded-full bg-[#101a2b] text-[#2e86ff]">
             <Swords className="size-5" />
           </span>
         </div>
@@ -176,11 +176,11 @@ export function BattleArena() {
         />
       </section>
 
-      <Card className="border-0 bg-[#101513] text-white ring-white/10">
+      <Card className="border-0 bg-[#101a2b] text-white ring-white/10">
         <CardContent className="grid gap-6 p-2 sm:grid-cols-[1fr_auto] sm:items-center">
           <div>
             <div className="flex flex-wrap items-center gap-2">
-              <Badge className="bg-[#d9ff43] text-[#10130b]">
+              <Badge className="bg-[#2e86ff] text-[#f4f1e8]">
                 kite-testnet
               </Badge>
               <Badge
@@ -201,7 +201,7 @@ export function BattleArena() {
             </p>
           </div>
           <Button
-            className="h-11 bg-[#d9ff43] px-5 text-[#10130b] hover:bg-[#e6ff7b]"
+            className="h-11 bg-[#2e86ff] px-5 text-[#f4f1e8] hover:bg-[#5aa0ff]"
             disabled={!ready || settling}
             onClick={settle}
           >
@@ -216,16 +216,16 @@ export function BattleArena() {
       </Card>
 
       {error && (
-        <p className="rounded-xl bg-red-50 p-4 text-sm text-red-700">
+        <p className="rounded-xl bg-[#ff3b30]/10 p-4 text-sm text-[#ff9a8a]">
           {error}
         </p>
       )}
 
       {receipt && (
-        <Card className="border-0 ring-2 ring-[#d9ff43]">
+        <Card className="border-0 ring-2 ring-[#2e86ff]">
           <CardHeader>
             <div className="flex items-center justify-between gap-4">
-              <Badge className="bg-amber-100 text-amber-900">
+              <Badge className="border border-[#ff6a1a]/30 bg-[#ff6a1a]/15 text-[#ff9a5a]">
                 SIMULATED — NO ON-CHAIN TX
               </Badge>
               <span className="text-xs text-muted-foreground">
@@ -233,7 +233,7 @@ export function BattleArena() {
               </span>
             </div>
             <CardTitle className="mt-4 flex items-center gap-2 text-3xl">
-              <Trophy className="text-[#799600]" />
+              <Trophy className="text-[#5aa0ff]" />
               {receipt.winnerName} wins
             </CardTitle>
             <CardDescription>
@@ -282,11 +282,11 @@ function PlayerCard({
   ) => void;
 }) {
   return (
-    <Card className="border-0 ring-black/8">
+    <Card className="border-0 ring-white/10">
       <CardHeader>
         <div className="flex items-center justify-between">
           <Badge variant="secondary">Player {index + 1}</Badge>
-          <Bot className="size-5 text-[#799600]" />
+          <Bot className="size-5 text-[#5aa0ff]" />
         </div>
         <label className="mt-3">
           <span className="sr-only">Player name</span>
@@ -305,7 +305,7 @@ function PlayerCard({
         <label className="block text-xs text-muted-foreground">
           Agent spending limit (test tokens)
           <input
-            className="mt-1.5 h-10 w-full rounded-lg border bg-white px-3 text-base text-foreground outline-none focus:border-[#91ae16]"
+            className="mt-1.5 h-10 w-full rounded-lg border bg-[#101a2b] px-3 text-base text-foreground outline-none focus:border-[#2e86ff]"
             max={100}
             min={0.1}
             onChange={(event) =>
@@ -319,7 +319,7 @@ function PlayerCard({
         <div
           className={cn(
             "mt-5 grid min-h-32 place-items-center rounded-xl border border-dashed",
-            player.analysis && "border-[#b6db1e] bg-[#f8ffe0]",
+            player.analysis && "border-[#5aa0ff] bg-[#0e1420]",
           )}
         >
           {player.analysis ? (
@@ -359,8 +359,8 @@ function ReceiptCheck({
   value: string;
 }) {
   return (
-    <div className="flex items-start gap-3 rounded-xl bg-[#f4f5f0] p-4">
-      <span className="text-[#799600] [&>svg]:size-5">{icon}</span>
+    <div className="flex items-start gap-3 rounded-xl bg-[#0e1420] p-4">
+      <span className="text-[#5aa0ff] [&>svg]:size-5">{icon}</span>
       <div>
         <span className="block text-xs text-muted-foreground">{label}</span>
         <strong className="font-medium">{value}</strong>

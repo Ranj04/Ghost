@@ -1,6 +1,14 @@
 import type { Metadata } from "next";
+import { Saira, Hanken_Grotesk, JetBrains_Mono } from "next/font/google";
 import Link from "next/link";
 import "./globals.css";
+
+// Distinctive trio: Saira (technical athletic display) for headers + stat
+// numbers, Hanken Grotesk (warm humanist) for prose, JetBrains Mono for every
+// measured number — the "instrument readout".
+const saira = Saira({ subsets: ["latin"], variable: "--font-saira", display: "swap" });
+const hanken = Hanken_Grotesk({ subsets: ["latin"], variable: "--font-hanken", display: "swap" });
+const jetbrains = JetBrains_Mono({ subsets: ["latin"], variable: "--font-jetbrains", display: "swap" });
 
 export const metadata: Metadata = {
   title: {
@@ -17,45 +25,42 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="h-full antialiased">
-      <body className="min-h-full bg-[#f7f8f3] text-[#101513]">
+    <html lang="en" className={`dark h-full antialiased ${saira.variable} ${hanken.variable} ${jetbrains.variable}`}>
+      <body className="min-h-full bg-background text-foreground">
         <div className="flex min-h-screen flex-col">
-          <header className="border-b border-black/6 bg-[#f7f8f3]/85 backdrop-blur-xl">
+          <header className="border-b border-white/10 bg-[#080c14]/80 backdrop-blur-xl">
             <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between px-5 sm:px-8">
               <Link
                 href="/"
-                className="flex items-center gap-2 text-lg font-semibold tracking-[-0.04em]"
+                className="flex items-center gap-2 font-heading text-lg font-semibold tracking-[-0.02em]"
               >
-                <span className="grid size-7 place-items-center rounded-full bg-[#101513] text-[#d9ff43]">
+                <span className="grid size-7 place-items-center rounded-full bg-[#2e86ff] text-[#04080f] shadow-[0_0_16px_rgba(46,134,255,0.5)]">
                   G
                 </span>
                 GHOST
               </Link>
-              <nav
-                className="flex items-center gap-1 text-sm"
-                aria-label="Primary navigation"
-              >
+              <nav className="flex items-center gap-1 text-sm" aria-label="Primary navigation">
                 <Link
                   href="/capture"
-                  className="rounded-full px-3 py-2 text-muted-foreground transition hover:bg-black/5 hover:text-foreground"
+                  className="rounded-full px-3 py-2 text-muted-foreground transition hover:bg-white/5 hover:text-foreground"
                 >
                   Analyze
                 </Link>
                 <Link
                   href="/history"
-                  className="rounded-full px-3 py-2 text-muted-foreground transition hover:bg-black/5 hover:text-foreground"
+                  className="rounded-full px-3 py-2 text-muted-foreground transition hover:bg-white/5 hover:text-foreground"
                 >
                   History
                 </Link>
                 <Link
                   href="/battle"
-                  className="rounded-full px-3 py-2 text-muted-foreground transition hover:bg-black/5 hover:text-foreground"
+                  className="rounded-full px-3 py-2 text-muted-foreground transition hover:bg-white/5 hover:text-foreground"
                 >
                   Battle
                 </Link>
                 <Link
                   href="/auth"
-                  className="ml-1 rounded-full bg-[#101513] px-3.5 py-2 text-white transition hover:bg-[#26302c]"
+                  className="ml-1 rounded-full bg-[#2e86ff] px-3.5 py-2 font-medium text-[#04080f] transition hover:bg-[#1e6fe0]"
                 >
                   Sign in
                 </Link>

@@ -9,7 +9,7 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-sans);
   --font-mono: var(--font-mono);
-  --font-heading: var(--font-sans);
+  --font-heading: var(--font-heading);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -48,75 +48,80 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
+/*
+ * Ghost — "motion-capture at night". Dark blue-black site, warm-white text,
+ * electric-blue brand accent, vivid orange reserved for alerts/errors only.
+ * The whole site is dark by default; tokens mirror src/components/overlay/palette.ts.
+ */
 :root {
-  --font-sans: "Helvetica Neue", "Inter", ui-sans-serif, system-ui, sans-serif;
-  --font-mono: "SFMono-Regular", Consolas, monospace;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
+  --font-heading: var(--font-saira), "Saira", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-hanken), "Hanken Grotesk", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains), "JetBrains Mono", ui-monospace, monospace;
+
+  /* Brand tokens (mirror the canvas palette) */
+  --ink: #080c14;
+  --surface: #101a2b;
+  --line: #1e2a3d;
+  --bone: #f4f1e8;
+  --blue: #2e86ff;
+  --blue-soft: #5aa0ff;
+  --orange: #ff6a1a;
+  --muted-ink: #8a94a8;
+
+  /* shadcn token mapping — dark by default */
+  --background: var(--ink);
+  --foreground: var(--bone);
+  --card: #0f1828;
+  --card-foreground: var(--bone);
+  --popover: #0f1828;
+  --popover-foreground: var(--bone);
+  --primary: var(--blue);
+  --primary-foreground: #04080f;
+  --secondary: #16202f;
+  --secondary-foreground: var(--bone);
+  --muted: #131c2b;
+  --muted-foreground: var(--muted-ink);
+  --accent: #13243e;
+  --accent-foreground: #cfe2ff;
+  --destructive: var(--orange);
+  --border: var(--line);
+  --input: var(--line);
+  --ring: var(--blue);
+  --chart-1: #2e86ff;
+  --chart-2: #5aa0ff;
+  --chart-3: #ff6a1a;
+  --chart-4: #7c879b;
+  --chart-5: #1e6fe0;
   --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --sidebar: #0f1828;
+  --sidebar-foreground: var(--bone);
+  --sidebar-primary: var(--blue);
+  --sidebar-primary-foreground: #04080f;
+  --sidebar-accent: #13243e;
+  --sidebar-accent-foreground: #cfe2ff;
+  --sidebar-border: var(--line);
+  --sidebar-ring: var(--blue);
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --background: var(--ink);
+  --foreground: var(--bone);
+  --card: #0f1828;
+  --card-foreground: var(--bone);
+  --popover: #0f1828;
+  --popover-foreground: var(--bone);
+  --primary: var(--blue);
+  --primary-foreground: #04080f;
+  --secondary: #16202f;
+  --secondary-foreground: var(--bone);
+  --muted: #131c2b;
+  --muted-foreground: var(--muted-ink);
+  --accent: #13243e;
+  --accent-foreground: #cfe2ff;
+  --destructive: var(--orange);
+  --border: var(--line);
+  --input: var(--line);
+  --ring: var(--blue);
 }
 
 @layer base {
@@ -129,30 +134,39 @@
   html {
     @apply font-sans;
   }
+  h1, h2, h3, .font-heading {
+    font-family: var(--font-heading);
+  }
 }
 
 @layer utilities {
   .eyebrow {
-    @apply text-xs font-semibold uppercase tracking-[0.2em] text-[#6a8200];
+    @apply text-xs font-semibold uppercase tracking-[0.2em] text-[var(--blue-soft)];
+  }
+  /* Measured numbers render as an instrument readout. */
+  .data {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
   }
 }
 
 .hero-glow {
   background:
-    radial-gradient(circle at 72% 42%, rgb(217 255 67 / 22%), transparent 27rem),
-    linear-gradient(135deg, #f7f8f3 35%, #eef1df);
+    radial-gradient(circle at 72% 38%, rgb(46 134 255 / 24%), transparent 27rem),
+    radial-gradient(circle at 18% 80%, rgb(255 106 26 / 10%), transparent 22rem),
+    linear-gradient(160deg, #080c14 30%, #0b1422);
 }
 
 .capture-grid {
   background-image:
-    linear-gradient(rgb(255 255 255 / 8%) 1px, transparent 1px),
-    linear-gradient(90deg, rgb(255 255 255 / 8%) 1px, transparent 1px);
+    linear-gradient(rgb(46 134 255 / 8%) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(46 134 255 / 8%) 1px, transparent 1px);
   background-size: 38px 38px;
 }
 
 .score-ring {
   background: conic-gradient(
-    #d9ff43 var(--score),
-    rgb(255 255 255 / 10%) var(--score)
+    var(--blue) var(--score),
+    rgb(255 255 255 / 8%) var(--score)
   );
 }

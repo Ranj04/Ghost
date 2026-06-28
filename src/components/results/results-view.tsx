@@ -45,7 +45,7 @@ export function ResultsView({
   return (
     <div className="space-y-6">
       <section className="grid gap-6 lg:grid-cols-[0.72fr_1.28fr]">
-        <Card className="border-0 bg-[#101513] text-white ring-white/10">
+        <Card className="border-0 bg-[#101a2b] text-white ring-white/10">
           <CardHeader>
             <CardDescription className="text-white/50">
               Form score
@@ -60,7 +60,7 @@ export function ResultsView({
                 } as CSSProperties
               }
             >
-              <div className="grid size-39 place-items-center rounded-full bg-[#101513] text-center">
+              <div className="grid size-39 place-items-center rounded-full bg-[#101a2b] text-center">
                 <div>
                   <strong className="block text-6xl font-semibold tracking-[-0.06em]">
                     {analysis.score}
@@ -71,19 +71,19 @@ export function ResultsView({
                 </div>
               </div>
             </div>
-            <div className="mt-7 flex items-center gap-2 text-sm text-[#d9ff43]">
+            <div className="mt-7 flex items-center gap-2 text-sm text-[#2e86ff]">
               <Sparkles className="size-4" />
               Solid base. One clear focus.
             </div>
           </CardContent>
         </Card>
 
-        <Card className="border-0 ring-black/8">
+        <Card className="border-0 ring-white/10">
           <CardHeader>
             <div className="flex items-center justify-between gap-3">
               <Badge
                 variant="secondary"
-                className="bg-[#efffb6] text-[#3f4d0b]"
+                className="border border-[#ff6a1a]/30 bg-[#ff6a1a]/15 text-[#ff9a5a]"
               >
                 <CircleAlert className="size-3" />
                 {severityLabel[topFlaw.severity]}
@@ -101,13 +101,13 @@ export function ResultsView({
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="mt-2 overflow-hidden rounded-2xl border bg-[#f4f5f0]">
+            <div className="mt-2 overflow-hidden rounded-2xl border bg-[#0e1420]">
               {ghostOverlay ?? (
                 <div className="relative grid min-h-52 place-items-center">
                   <div className="capture-grid absolute inset-0 opacity-25" />
                   <div className="relative flex items-center gap-5">
-                    <div className="h-28 w-px rotate-12 bg-[#101513]/35 shadow-[14px_20px_0_#10151359,-10px_52px_0_#10151359]" />
-                    <div className="h-28 w-px -rotate-6 bg-[#a9ce15] shadow-[10px_18px_0_#a9ce15,-8px_52px_0_#a9ce15]" />
+                    <div className="h-28 w-px rotate-12 bg-[#101a2b]/35 shadow-[14px_20px_0_#101a2b59,-10px_52px_0_#101a2b59]" />
+                    <div className="h-28 w-px -rotate-6 bg-[#2e86ff] shadow-[10px_18px_0_#2e86ff,-8px_52px_0_#2e86ff]" />
                   </div>
                   <span className="absolute bottom-4 left-4 text-xs font-medium text-muted-foreground">
                     Ghost overlay slot
@@ -127,10 +127,10 @@ export function ResultsView({
         </Card>
       </section>
 
-      <Card className="border-0 ring-black/8">
+      <Card className="border-0 ring-white/10">
         <CardHeader>
           <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-            <RotateCcw className="size-4 text-[#799600]" />
+            <RotateCcw className="size-4 text-[#5aa0ff]" />
             Corrective drill
           </div>
           <CardTitle className="mt-2 text-2xl font-semibold">
@@ -141,10 +141,10 @@ export function ResultsView({
           <ol className="grid gap-3 lg:grid-cols-3">
             {coaching.drill.steps.map((step, index) => (
               <li
-                className="flex gap-3 rounded-xl bg-[#f4f5f0] p-4 text-sm leading-6"
+                className="flex gap-3 rounded-xl bg-[#0e1420] p-4 text-sm leading-6"
                 key={step}
               >
-                <span className="grid size-6 shrink-0 place-items-center rounded-full bg-[#101513] text-xs text-white">
+                <span className="grid size-6 shrink-0 place-items-center rounded-full bg-[#101a2b] text-xs text-white">
                   {index + 1}
                 </span>
                 {step}
@@ -152,7 +152,7 @@ export function ResultsView({
             ))}
           </ol>
           <a
-            className="mt-5 inline-flex items-center gap-1.5 text-sm font-medium underline decoration-black/20 underline-offset-4 hover:decoration-black"
+            className="mt-5 inline-flex items-center gap-1.5 text-sm font-medium underline decoration-white/30 underline-offset-4 hover:decoration-white"
             href={coaching.drill.sourceUrl}
             target="_blank"
             rel="noreferrer"
@@ -172,7 +172,7 @@ export function ResultsView({
         </Link>
         {saveAction ?? (
           <Link
-            className={cn(buttonVariants(), "h-11 bg-[#101513] px-5 text-white")}
+            className={cn(buttonVariants(), "h-11 bg-[#2e86ff] px-5 font-medium text-[#04080f] hover:bg-[#1e6fe0]")}
             href="/history"
           >
             <Check className="size-4" />
@@ -194,12 +194,12 @@ function Metric({
   accent?: boolean;
 }) {
   return (
-    <div className="rounded-xl border bg-white p-4">
+    <div className="rounded-xl border bg-[#101a2b] p-4">
       <span className="block text-xs text-muted-foreground">{label}</span>
       <strong
         className={cn(
           "mt-1 block text-2xl font-semibold tabular-nums",
-          accent && "text-[#799600]",
+          accent && "text-[#5aa0ff]",
         )}
       >
         {value}

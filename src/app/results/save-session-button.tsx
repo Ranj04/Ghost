@@ -40,7 +40,7 @@ export function SaveSessionButton({
   return (
     <div className="flex flex-col items-end gap-2">
       <Button
-        className="h-11 bg-[#101513] px-5 text-white"
+        className="h-11 bg-[#2e86ff] px-5 font-medium text-[#04080f] hover:bg-[#1e6fe0]"
         disabled={pending}
         onClick={handleSave}
       >

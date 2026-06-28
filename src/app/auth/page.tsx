@@ -29,20 +29,20 @@ export default async function AuthPage({
         </p>
         <div className="mt-8 space-y-3 text-sm">
           <p className="flex items-center gap-3">
-            <ShieldCheck className="size-5 text-[#799600]" />
+            <ShieldCheck className="size-5 text-[#5aa0ff]" />
             Server-owned refresh session
           </p>
           <p className="flex items-center gap-3">
-            <Cloud className="size-5 text-[#799600]" />
+            <Cloud className="size-5 text-[#5aa0ff]" />
             InsForge-backed player history
           </p>
         </div>
       </section>
 
-      <Card className="border-0 p-3 ring-black/8">
+      <Card className="border-0 p-3 ring-white/10">
         <CardContent className="p-5 sm:p-7">
           {!configured && (
-            <div className="mb-5 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-900">
+            <div className="mb-5 rounded-xl border border-[#ff6a1a]/30 bg-[#ff6a1a]/10 p-4 text-sm leading-6 text-[#ffd2b3]">
               InsForge credentials are not configured in this environment.
               Account actions are disabled; you can still use the{" "}
               <Link className="font-semibold underline" href="/results">

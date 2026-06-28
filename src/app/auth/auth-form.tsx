@@ -26,13 +26,13 @@ export function AuthForm({
 
   return (
     <div>
-      <div className="mb-6 grid grid-cols-2 rounded-xl bg-black/5 p-1">
+      <div className="mb-6 grid grid-cols-2 rounded-xl bg-white/5 p-1">
         {(["sign-in", "sign-up"] as const).map((option) => (
           <button
             className={cn(
               "rounded-lg px-4 py-2 text-sm font-medium transition",
               mode === option
-                ? "bg-white text-foreground shadow-sm"
+                ? "bg-[#101a2b] text-foreground shadow-sm"
                 : "text-muted-foreground",
             )}
             key={option}
@@ -74,7 +74,7 @@ export function AuthForm({
         {state.error && (
           <p
             aria-live="polite"
-            className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700"
+            className="rounded-lg bg-[#ff3b30]/10 px-3 py-2 text-sm text-[#ff9a8a]"
           >
             {state.error}
           </p>
@@ -82,13 +82,13 @@ export function AuthForm({
         {state.message && (
           <p
             aria-live="polite"
-            className="rounded-lg bg-[#efffb6] px-3 py-2 text-sm text-[#3f4d0b]"
+            className="rounded-lg bg-[#11233e] px-3 py-2 text-sm text-[#1e2a3d]"
           >
             {state.message}
           </p>
         )}
         <Button
-          className="h-11 w-full bg-[#101513] text-white"
+          className="h-11 w-full bg-[#2e86ff] font-medium text-[#04080f] hover:bg-[#1e6fe0]"
           disabled={pending || !configured}
           type="submit"
         >
@@ -107,7 +107,7 @@ function Field({
     <label className="block text-sm font-medium">
       {label}
       <input
-        className="mt-1.5 h-11 w-full rounded-lg border border-black/10 bg-white px-3 outline-none transition placeholder:text-black/30 focus:border-[#91ae16] focus:ring-3 focus:ring-[#d9ff43]/25"
+        className="mt-1.5 h-11 w-full rounded-lg border border-white/10 bg-[#101a2b] px-3 outline-none transition placeholder:text-white/30 focus:border-[#2e86ff] focus:ring-3 focus:ring-[#2e86ff]/25"
         {...props}
       />
     </label>
