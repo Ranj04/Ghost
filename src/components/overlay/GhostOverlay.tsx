@@ -165,7 +165,7 @@ export function GhostOverlay({ result, width = 440, height = 560, className }: G
         <canvas ref={canvasRef} className="block" />
         <div className="pointer-events-none absolute inset-x-0 top-0 flex items-center justify-between p-3.5">
           <span className="rounded-full px-2.5 py-1 text-[10px] font-medium uppercase tracking-[0.18em] text-[#8B93A0]" style={{ background: "rgba(255,255,255,0.04)" }}>
-            Form × Ghost
+            Form vs ghost
           </span>
           {isReleaseFrame && (
             <span className="rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#0E1116]" style={{ background: "#4FD6E0" }}>

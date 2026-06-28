@@ -198,8 +198,8 @@ export function CaptureView({ onCapture, className }: CaptureViewProps) {
 
         {ready && !capturable && !recording && (
           <div className="pointer-events-none absolute inset-0 flex items-end justify-center p-6 pb-8">
-            <p className="max-w-xs rounded-xl bg-black/65 px-4 py-3 text-center text-sm font-medium text-white backdrop-blur">
-              Step back so your whole body is in frame — camera side-on.
+            <p className="max-w-xs rounded-lg bg-black/80 px-4 py-3 text-center text-sm font-medium text-white">
+              Step back so your whole body is in frame. Stand side-on to the camera.
             </p>
           </div>
         )}
@@ -208,7 +208,7 @@ export function CaptureView({ onCapture, className }: CaptureViewProps) {
       {(error || initError) && <p className="mt-2 text-sm text-red-500">{error ?? initError}</p>}
       <div className="mt-3 flex items-center gap-3">
         <Button onClick={toggleRecording} disabled={recordDisabled} variant={recording ? "destructive" : "default"}>
-          {recording ? "Stop & analyze" : "Record shot"}
+          {recording ? "Stop and analyze" : "Record a shot"}
         </Button>
         {!ready && !initError && <span className="text-sm text-muted-foreground">Starting camera…</span>}
         {ready && !capturable && !recording && (
