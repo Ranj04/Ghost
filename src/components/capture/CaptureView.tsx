@@ -3,12 +3,13 @@
 // Recording buffers PoseFrames; stopping assembles a contract-valid ShotCapture
 // and hands it back via onCapture.
 import { useCallback, useEffect, useRef, useState } from "react";
-import { DrawingUtils, PoseLandmarker, type NormalizedLandmark } from "@mediapipe/tasks-vision";
+import { PoseLandmarker, type NormalizedLandmark } from "@mediapipe/tasks-vision";
 import { Button } from "@/components/ui/button";
 import { useCamera } from "@/lib/vision/useCamera";
 import { createPoseLandmarker } from "@/lib/vision/poseLandmarker";
 import { landmarksToKeypoints } from "@/lib/vision/landmarks";
 import { buildCapture } from "@/lib/vision/buildCapture";
+import { isVisible } from "@/lib/vision/visibility";
 import type { PoseFrame, ShotCapture } from "@/lib/contracts";
 
 export interface CaptureViewProps {
@@ -16,11 +17,44 @@ export interface CaptureViewProps {
   className?: string;
 }
 
+const POSE_CONNECTIONS = PoseLandmarker.POSE_CONNECTIONS as { start: number; end: number }[];
+const DEBUG_VISIBILITY = false;
+
+/** Draw the live preview skeleton — gated: only confidently-seen joints/bones. */
+function drawGatedPreview(ctx: CanvasRenderingContext2D, landmarks: NormalizedLandmark[], w: number, h: number): void {
+  ctx.save();
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+  ctx.strokeStyle = "rgba(242, 240, 233, 0.9)";
+  ctx.lineWidth = 3;
+  ctx.shadowColor = "rgba(242, 240, 233, 0.35)";
+  ctx.shadowBlur = 4;
+  for (const c of POSE_CONNECTIONS) {
+    const a = landmarks[c.start];
+    const b = landmarks[c.end];
+    if (a && b && isVisible(a) && isVisible(b)) {
+      ctx.beginPath();
+      ctx.moveTo(a.x * w, a.y * h);
+      ctx.lineTo(b.x * w, b.y * h);
+      ctx.stroke();
+    }
+  }
+  ctx.shadowBlur = 0;
+  ctx.fillStyle = "#F2F0E9";
+  for (const p of landmarks) {
+    if (isVisible(p)) {
+      ctx.beginPath();
+      ctx.arc(p.x * w, p.y * h, 3, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+  ctx.restore();
+}
+
 export function CaptureView({ onCapture, className }: CaptureViewProps) {
   const { videoRef, error, start, stop } = useCamera();
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const landmarkerRef = useRef<PoseLandmarker | null>(null);
-  const drawingRef = useRef<DrawingUtils | null>(null);
   const rafRef = useRef<number | null>(null);
   const recordingRef = useRef(false);
   const bufferRef = useRef<PoseFrame[]>([]);
@@ -72,7 +106,6 @@ export function CaptureView({ onCapture, className }: CaptureViewProps) {
       }
       const ctx = canvas.getContext("2d");
       if (!ctx) return;
-      if (!drawingRef.current) drawingRef.current = new DrawingUtils(ctx);
 
       const nowMs = performance.now();
       if (video.currentTime !== lastVideoTimeRef.current) {
@@ -81,11 +114,11 @@ export function CaptureView({ onCapture, className }: CaptureViewProps) {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         const landmarks = result.landmarks?.[0] as NormalizedLandmark[] | undefined;
         if (landmarks) {
-          drawingRef.current.drawConnectors(landmarks, PoseLandmarker.POSE_CONNECTIONS, {
-            color: "#22d3ee",
-            lineWidth: 3,
-          });
-          drawingRef.current.drawLandmarks(landmarks, { color: "#f43f5e", radius: 3 });
+          drawGatedPreview(ctx, landmarks, canvas.width, canvas.height);
+          if (DEBUG_VISIBILITY) {
+            const n = landmarks.filter((p) => isVisible(p)).length;
+            console.debug(`${n}/${landmarks.length} landmarks visible`);
+          }
           if (recordingRef.current) {
             bufferRef.current.push({
               t: nowMs - recordStartRef.current,

@@ -8,3 +8,4 @@ export {
   landmarksToKeypoints,
   type NormalizedLandmarkLike,
 } from "./landmarks";
+export { isVisible, countVisible, VISIBILITY_THRESHOLD, type ScorableLandmark } from "./visibility";

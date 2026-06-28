@@ -6,6 +6,7 @@
 // are a crisp bone-white skeleton on top. One coral deviation shows the gap to
 // the ideal. Glowing-aqua-behind / crisp-white-in-front keeps it legible.
 import type { JointMetrics, PoseFrame } from "@/lib/contracts";
+import { isVisible } from "@/lib/vision/visibility";
 
 const INK = "#0E1116";
 const GHOST = "#4FD6E0";
@@ -51,8 +52,14 @@ interface PxPoint {
   y: number;
 }
 
+// Only VISIBLE keypoints make it into the draw map — bones/nodes to invented or
+// off-frame joints are dropped, not drawn.
 function pxMap(frame: PoseFrame, w: number, h: number): Map<string, PxPoint> {
-  return new Map(frame.keypoints.map((k) => [k.name, { x: k.x * w, y: k.y * h }]));
+  const m = new Map<string, PxPoint>();
+  for (const k of frame.keypoints) {
+    if (isVisible(k)) m.set(k.name, { x: k.x * w, y: k.y * h });
+  }
+  return m;
 }
 
 function midpoint(a?: PxPoint, b?: PxPoint): PxPoint | undefined {

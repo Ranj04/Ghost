@@ -5,6 +5,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Pause, Play, RotateCcw } from "lucide-react";
 import { detectShootingSide } from "@/lib/analysis";
+import { isVisible } from "@/lib/vision/visibility";
 import type { AnalysisResult } from "@/lib/contracts";
 import {
   drawBackdrop,
@@ -54,8 +55,9 @@ export function GhostOverlay({ result, width = 440, height = 560, className }: G
     let minY = Infinity;
     let maxX = -Infinity;
     let maxY = -Infinity;
-    const consider = (kps: { x: number; y: number }[]) => {
+    const consider = (kps: { x: number; y: number; score?: number }[]) => {
       for (const k of kps) {
+        if (!isVisible(k)) continue;
         const x = k.x * width;
         const y = k.y * height;
         if (x < minX) minX = x;
