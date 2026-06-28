@@ -2,13 +2,13 @@
 export { GhostOverlay, type GhostOverlayProps } from "./GhostOverlay";
 export {
   drawBackdrop,
+  drawVignette,
   drawGhostFigure,
-  drawAthleteFigure,
-  drawHighlight,
-  fillBody,
+  drawPlayerSkeleton,
+  drawDeviation,
+  flawConnectionKeys,
   jointsForFlaw,
   resolvableConnections,
   POSE_CONNECTIONS_BY_NAME,
   JOINT_NAMES,
-  type Offscreen,
 } from "./skeleton";

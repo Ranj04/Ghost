@@ -1,20 +1,19 @@
 "use client";
-// Cinematic "form vs ghost" overlay: the athlete and the translucent reference
-// ghost rendered as human SILHOUETTES on a depth-gradient stage, with a pulsing
-// marker on the flawed joint, a scrub slider, and play/pause. A single
-// requestAnimationFrame loop drives the pulse and playback. Silhouettes are
-// composited via an offscreen buffer (see skeleton.ts) for clean union shapes.
+// The form-vs-ghost signature: a luminous aqua IDEAL light-figure with your crisp
+// BONE skeleton on top and one coral deviation showing the gap. A single rAF loop
+// drives the eased ghost intro, the deviation pulse, and playback. Retina-aware.
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Pause, Play, RotateCcw } from "lucide-react";
 import { detectShootingSide } from "@/lib/analysis";
 import type { AnalysisResult } from "@/lib/contracts";
 import {
-  drawAthleteFigure,
   drawBackdrop,
+  drawDeviation,
   drawGhostFigure,
-  drawHighlight,
+  drawPlayerSkeleton,
+  drawVignette,
+  flawConnectionKeys,
   jointsForFlaw,
-  type Offscreen,
 } from "./skeleton";
 
 export interface GhostOverlayProps {
@@ -24,19 +23,17 @@ export interface GhostOverlayProps {
   className?: string;
 }
 
-const FLAW_COLOR = "#fbbf24"; // amber marker on the flawed joint
+const easeOutCubic = (t: number) => 1 - Math.pow(1 - t, 3);
 
 export function GhostOverlay({ result, width = 440, height = 560, className }: GhostOverlayProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const offRef = useRef<Offscreen | null>(null);
   const frames = result.capture.frames;
   const total = frames.length;
   const fps = Math.max(1, result.capture.fps);
-
   const releaseIndex = Math.min(result.metrics.releaseFrameIndex ?? 0, total - 1);
+
   const [index, setIndex] = useState(releaseIndex);
   const [playing, setPlaying] = useState(false);
-
   const indexRef = useRef(index);
   const playingRef = useRef(playing);
   useEffect(() => {
@@ -47,9 +44,34 @@ export function GhostOverlay({ result, width = 440, height = 560, className }: G
   }, [playing]);
 
   const side = useMemo(() => detectShootingSide(result.capture), [result.capture]);
-  const highlightJoints = useMemo(() => jointsForFlaw(result.topFlaw.metric, side), [result.topFlaw.metric, side]);
+  const flawJoint = useMemo(() => jointsForFlaw(result.topFlaw.metric, side)[0], [result.topFlaw.metric, side]);
+  const flawKeys = useMemo(() => (flawJoint ? flawConnectionKeys(flawJoint) : new Set<string>()), [flawJoint]);
 
-  // Crisp retina main canvas + matching offscreen buffer.
+  // Auto-fit: center the figure and scale it to fill the frame (stable across
+  // frames so it doesn't jump), using the bounding box of all user + ghost poses.
+  const fit = useMemo(() => {
+    let minX = Infinity;
+    let minY = Infinity;
+    let maxX = -Infinity;
+    let maxY = -Infinity;
+    const consider = (kps: { x: number; y: number }[]) => {
+      for (const k of kps) {
+        const x = k.x * width;
+        const y = k.y * height;
+        if (x < minX) minX = x;
+        if (x > maxX) maxX = x;
+        if (y < minY) minY = y;
+        if (y > maxY) maxY = y;
+      }
+    };
+    for (const f of frames) consider(f.keypoints);
+    for (const g of result.ghostRef) consider(g.keypoints);
+    const bw = Math.max(1, maxX - minX);
+    const bh = Math.max(1, maxY - minY);
+    const s = Math.max(0.9, Math.min(2.6, Math.min((width * 0.66) / bw, (height * 0.84) / bh)));
+    return { s, cx: (minX + maxX) / 2, cy: (minY + maxY) / 2 };
+  }, [frames, result.ghostRef, width, height]);
+
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -59,40 +81,38 @@ export function GhostOverlay({ result, width = 440, height = 560, className }: G
     canvas.style.width = `${width}px`;
     canvas.style.height = `${height}px`;
     canvas.getContext("2d")?.setTransform(dpr, 0, 0, dpr, 0, 0);
-
-    const offCanvas = document.createElement("canvas");
-    offCanvas.width = width * dpr;
-    offCanvas.height = height * dpr;
-    const offCtx = offCanvas.getContext("2d");
-    if (offCtx) {
-      offCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      offRef.current = { canvas: offCanvas, ctx: offCtx };
-    }
   }, [width, height]);
 
-  // Single render + playback loop.
   useEffect(() => {
     const ctx = canvasRef.current?.getContext("2d");
     if (!ctx) return;
+    const reduced = typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     let raf = 0;
     let last = performance.now();
+    const start = last;
     let acc = 0;
     const frameDur = 1000 / fps;
 
     const draw = (i: number, now: number) => {
-      const off = offRef.current;
       ctx.clearRect(0, 0, width, height);
       drawBackdrop(ctx, width, height);
+      const intro = reduced ? 1 : easeOutCubic(Math.min(1, (now - start) / 650));
       const ghost = result.ghostRef[i];
-      if (ghost && off) drawGhostFigure(ctx, off, ghost, width, height);
       const user = frames[i];
-      if (user && off) {
-        drawAthleteFigure(ctx, off, user, width, height);
-        if (highlightJoints.length) {
-          const pulse = 0.5 + 0.5 * Math.sin(now / 450);
-          drawHighlight(ctx, user, highlightJoints, width, height, FLAW_COLOR, pulse);
+      ctx.save();
+      ctx.translate(width / 2, height / 2);
+      ctx.scale(fit.s, fit.s);
+      ctx.translate(-fit.cx, -fit.cy);
+      if (ghost) drawGhostFigure(ctx, ghost, width, height, intro);
+      if (user) {
+        drawPlayerSkeleton(ctx, user, width, height, flawKeys);
+        if (ghost && flawJoint) {
+          const pulse = reduced ? 0.5 : 0.5 + 0.5 * Math.sin(now / 450);
+          drawDeviation(ctx, user, ghost, width, height, flawJoint, pulse);
         }
       }
+      ctx.restore();
+      drawVignette(ctx, width, height);
     };
 
     const tick = (now: number) => {
@@ -117,26 +137,29 @@ export function GhostOverlay({ result, width = 440, height = 560, className }: G
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, [result, frames, total, fps, highlightJoints, width, height]);
+  }, [result, frames, total, fps, flawKeys, flawJoint, fit, width, height]);
 
   const atEnd = index >= total - 1;
   const isReleaseFrame = index === result.metrics.releaseFrameIndex;
+  const releasePct = total > 1 ? (releaseIndex / (total - 1)) * 100 : 0;
 
   return (
-    <div className={className}>
-      <div className="relative overflow-hidden rounded-2xl ring-1 ring-white/10" style={{ width, height }}>
+    <div className={className} style={{ width }}>
+      <div className="relative overflow-hidden rounded-2xl" style={{ width, height, boxShadow: "0 0 0 1px #232A33, 0 20px 60px -20px rgba(0,0,0,0.8)" }}>
         <canvas ref={canvasRef} className="block" />
-        <div className="pointer-events-none absolute inset-x-0 top-0 flex items-center justify-between p-3">
-          <span className="rounded-full bg-white/5 px-2.5 py-1 text-[11px] font-medium tracking-wide text-white/70 backdrop-blur">
-            FORM × GHOST
+        <div className="pointer-events-none absolute inset-x-0 top-0 flex items-center justify-between p-3.5">
+          <span className="rounded-full px-2.5 py-1 text-[10px] font-medium uppercase tracking-[0.18em] text-[#8B93A0]" style={{ background: "rgba(255,255,255,0.04)" }}>
+            Form × Ghost
           </span>
           {isReleaseFrame && (
-            <span className="rounded-full bg-amber-400/90 px-2.5 py-1 text-[11px] font-semibold text-black">RELEASE</span>
+            <span className="rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#0E1116]" style={{ background: "#4FD6E0" }}>
+              Release
+            </span>
           )}
         </div>
       </div>
 
-      <div className="mt-3 flex items-center gap-3" style={{ width }}>
+      <div className="mt-4 flex items-center gap-3">
         <button
           type="button"
           onClick={() => {
@@ -146,39 +169,50 @@ export function GhostOverlay({ result, width = 440, height = 560, className }: G
             }
             setPlaying((p) => !p);
           }}
-          className="grid size-9 shrink-0 place-items-center rounded-full bg-cyan-400 text-black transition hover:bg-cyan-300"
+          className="grid size-9 shrink-0 place-items-center rounded-full text-[#0E1116] transition hover:brightness-110"
+          style={{ background: "#4FD6E0" }}
           aria-label={playing ? "Pause" : "Play"}
         >
           {playing ? <Pause className="size-4" /> : atEnd ? <RotateCcw className="size-4" /> : <Play className="size-4" />}
         </button>
-        <input
-          type="range"
-          min={0}
-          max={Math.max(0, total - 1)}
-          value={index}
-          onChange={(e) => {
-            setPlaying(false);
-            const v = Number(e.target.value);
-            setIndex(v);
-            indexRef.current = v;
-          }}
-          className="h-1.5 flex-1 cursor-pointer accent-cyan-400"
-          aria-label="Scrub shot"
-        />
-        <span className="w-14 shrink-0 text-right text-xs tabular-nums text-muted-foreground">
-          {index + 1}/{total}
+
+        <div className="relative flex-1">
+          <div
+            className="pointer-events-none absolute top-1/2 z-10 h-3 w-px -translate-y-1/2"
+            style={{ left: `${releasePct}%`, background: "#4FD6E0", boxShadow: "0 0 6px #4FD6E0" }}
+            title="Release frame"
+          />
+          <input
+            type="range"
+            min={0}
+            max={Math.max(0, total - 1)}
+            value={index}
+            onChange={(e) => {
+              setPlaying(false);
+              let v = Number(e.target.value);
+              if (Math.abs(v - releaseIndex) <= 1) v = releaseIndex;
+              setIndex(v);
+              indexRef.current = v;
+            }}
+            aria-label="Scrub shot"
+            className="w-full cursor-pointer appearance-none bg-transparent [&::-webkit-slider-runnable-track]:h-1 [&::-webkit-slider-runnable-track]:rounded-full [&::-webkit-slider-runnable-track]:bg-[#232A33] [&::-webkit-slider-thumb]:-mt-1.5 [&::-webkit-slider-thumb]:size-3.5 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-[#F2F0E9] [&::-moz-range-track]:h-1 [&::-moz-range-track]:rounded-full [&::-moz-range-track]:bg-[#232A33] [&::-moz-range-thumb]:size-3.5 [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-[#F2F0E9]"
+          />
+        </div>
+
+        <span className="w-14 shrink-0 text-right font-mono text-xs tabular-nums text-[#8B93A0]">
+          {String(index + 1).padStart(2, "0")}/{total}
         </span>
       </div>
 
-      <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-muted-foreground" style={{ maxWidth: width }}>
+      <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-[#8B93A0]">
         <span className="flex items-center gap-1.5">
-          <span className="size-2.5 rounded-full bg-cyan-400 shadow-[0_0_8px_2px_rgba(34,211,238,0.7)]" /> You
+          <span className="size-2.5 rounded-full" style={{ background: "#F2F0E9" }} /> You
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="size-2.5 rounded-full bg-sky-100/80 shadow-[0_0_8px_2px_rgba(186,224,255,0.7)]" /> Ghost
+          <span className="size-2.5 rounded-full" style={{ background: "#4FD6E0", boxShadow: "0 0 8px 2px rgba(79,214,224,0.6)" }} /> Ideal
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="size-2.5 rounded-full border-2 border-amber-400" /> {result.topFlaw.label}
+          <span className="size-2.5 rounded-full" style={{ border: "2px solid #FF6B4A" }} /> {result.topFlaw.label}
         </span>
       </div>
     </div>
