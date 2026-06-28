@@ -1,9 +1,9 @@
 /**
  * FROZEN CONTRACTS — the only surface the two build halves share.
  *
- * Person A (feat/vision-core) and Person B (feat/platform) both code against
- * these Zod schemas + inferred types. Editing this file requires a
- * NOTIFY PARTNER gate (see OWNERSHIP.md). Do not change shapes casually.
+ * Person A and Person B both work on main and code against these Zod schemas
+ * + inferred types. Editing this file requires a NOTIFY PARTNER gate
+ * (see OWNERSHIP.md). Do not change shapes casually.
  *
  * Zod v4. Runtime validation lives here so fixtures, persisted rows, and
  * cross-boundary payloads can all be parsed against one source of truth.
