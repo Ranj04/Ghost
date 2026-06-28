@@ -8,6 +8,8 @@ import { cn } from "@/lib/utils";
 
 import {
   authenticate,
+  resendVerificationCode,
+  verifyEmailCode,
   type AuthActionState,
 } from "./actions";
 
@@ -23,6 +25,16 @@ export function AuthForm({
   const [mode, setMode] = useState<"sign-in" | "sign-up">("sign-in");
   const action = authenticate.bind(null, mode);
   const [state, formAction, pending] = useActionState(action, initialState);
+
+  if (state.verifyEmail && state.email) {
+    return (
+      <VerifyEmailForm
+        email={state.email}
+        nextPath={state.next ?? nextPath}
+        notice={state.message}
+      />
+    );
+  }
 
   return (
     <div>
@@ -99,6 +111,97 @@ export function AuthForm({
     </div>
   );
 }
+function VerifyEmailForm({
+  email,
+  nextPath,
+  notice,
+}: {
+  email: string;
+  nextPath: string;
+  notice?: string;
+}) {
+  const [state, formAction, pending] = useActionState(
+    verifyEmailCode,
+    { verifyEmail: true, email, next: nextPath } as AuthActionState,
+  );
+  const [resendState, resendAction, resending] = useActionState(
+    resendVerificationCode,
+    { verifyEmail: true, email, next: nextPath } as AuthActionState,
+  );
+
+  const banner = state.error
+    ? null
+    : resendState.message ?? notice;
+
+  return (
+    <div>
+      <div className="mb-6">
+        <h2 className="text-lg font-semibold">Verify your email</h2>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Enter the 6-digit code we sent to{" "}
+          <span className="font-medium text-foreground">{email}</span>.
+        </p>
+      </div>
+
+      <form action={formAction} className="space-y-4">
+        <input name="email" type="hidden" value={email} />
+        <input name="next" type="hidden" value={nextPath} />
+        <label className="block text-sm font-medium">
+          Verification code
+          <input
+            autoComplete="one-time-code"
+            autoFocus
+            className="mt-1.5 h-12 w-full rounded-lg border border-white/10 bg-[#101a2b] px-3 text-center text-2xl text-foreground tracking-[0.5em] outline-none transition placeholder:text-white/20 focus:border-[#2e86ff] focus:ring-3 focus:ring-[#2e86ff]/25"
+            inputMode="numeric"
+            maxLength={6}
+            name="otp"
+            pattern="\d{6}"
+            placeholder="······"
+            required
+          />
+        </label>
+        {banner && (
+          <p
+            aria-live="polite"
+            className="rounded-lg bg-[#11233e] px-3 py-2 text-sm text-[#cfe2ff]"
+          >
+            {banner}
+          </p>
+        )}
+        {state.error && (
+          <p
+            aria-live="polite"
+            className="rounded-lg bg-[#ff6a1a]/10 px-3 py-2 text-sm text-[#ffd2b3]"
+          >
+            {state.error}
+          </p>
+        )}
+        <Button
+          className="h-11 w-full bg-[#2e86ff] font-medium text-[#04080f] hover:bg-[#1e6fe0]"
+          disabled={pending}
+          type="submit"
+        >
+          {pending && <LoaderCircle className="animate-spin" />}
+          Verify and continue
+        </Button>
+      </form>
+
+      <form action={resendAction} className="mt-3">
+        <input name="email" type="hidden" value={email} />
+        <input name="next" type="hidden" value={nextPath} />
+        <button
+          className="flex w-full items-center justify-center gap-2 text-sm font-medium text-muted-foreground transition hover:text-foreground disabled:opacity-50"
+          disabled={resending}
+          type="submit"
+        >
+          {resending && <LoaderCircle className="size-4 animate-spin" />}
+          Didn&apos;t get it? Resend code
+        </button>
+      </form>
+    </div>
+  );
+}
+
 function Field({
   label,
   ...props

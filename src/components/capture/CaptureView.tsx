@@ -20,6 +20,12 @@ export interface CaptureViewProps {
 
 const POSE_CONNECTIONS = PoseLandmarker.POSE_CONNECTIONS as { start: number; end: number }[];
 
+// Hands-free auto-record: hold a good frame briefly, count down, then record a
+// fixed window so you never have to reach the keyboard from across the room.
+const READY_HOLD_MS = 700;
+const COUNTDOWN_S = 3;
+const RECORD_MS = 5000;
+
 /** Draw the live preview skeleton — gated: only confidently-seen joints/bones. */
 function drawGatedPreview(ctx: CanvasRenderingContext2D, landmarks: NormalizedLandmark[], w: number, h: number): void {
   ctx.save();
@@ -79,10 +85,13 @@ export function CaptureView({ onCapture, className }: CaptureViewProps) {
   const lastVideoTimeRef = useRef(-1);
 
   const [ready, setReady] = useState(false);
-  const [recording, setRecording] = useState(false);
   const [capturable, setCapturable] = useState(false);
   const capturableRef = useRef(false);
   const [initError, setInitError] = useState<string | null>(null);
+  const [phase, setPhase] = useState<"idle" | "countdown" | "recording">(
+    "idle",
+  );
+  const [count, setCount] = useState(COUNTDOWN_S);
 
   // Initialize camera + pose model once.
   useEffect(() => {
@@ -136,6 +145,11 @@ export function CaptureView({ onCapture, className }: CaptureViewProps) {
         if (cap !== capturableRef.current) {
           capturableRef.current = cap;
           setCapturable(cap);
+          if (!cap) {
+            setPhase((current) =>
+              current === "countdown" ? "idle" : current,
+            );
+          }
         }
         if (landmarks) {
           drawGatedPreview(ctx, landmarks, canvas.width, canvas.height);
@@ -152,21 +166,66 @@ export function CaptureView({ onCapture, className }: CaptureViewProps) {
     return () => cancelAnimationFrame(raf);
   }, [ready, videoRef]);
 
-  const toggleRecording = useCallback(() => {
-    if (recordingRef.current) {
-      recordingRef.current = false;
-      setRecording(false);
-      const capture = buildCapture(bufferRef.current, { view: "side" });
-      onCapture?.(capture);
-    } else {
-      if (!capturableRef.current) return; // guard: don't start on bad framing
-      bufferRef.current = [];
-      recordStartRef.current = performance.now();
-      recordingRef.current = true;
-      setRecording(true);
-    }
+  // Keep the latest onCapture without retriggering the recording effect.
+  const onCaptureRef = useRef(onCapture);
+  useEffect(() => {
+    onCaptureRef.current = onCapture;
   }, [onCapture]);
 
+  const finishRecording = useCallback(() => {
+    if (!recordingRef.current) return;
+    recordingRef.current = false;
+    const capture = buildCapture(bufferRef.current, { view: "side" });
+    setPhase("idle");
+    onCaptureRef.current?.(capture);
+  }, []);
+
+  // Once the framing is good, hold briefly then start the countdown.
+  useEffect(() => {
+    if (!ready || phase !== "idle" || !capturable) return;
+    const hold = setTimeout(() => {
+      setCount(COUNTDOWN_S);
+      setPhase("countdown");
+    }, READY_HOLD_MS);
+    return () => clearTimeout(hold);
+  }, [ready, phase, capturable]);
+
+  // Tick the countdown, then flip into recording.
+  useEffect(() => {
+    if (phase !== "countdown") return;
+    let n = COUNTDOWN_S;
+    const id = setInterval(() => {
+      n -= 1;
+      if (n <= 0) {
+        clearInterval(id);
+        setPhase("recording");
+      } else {
+        setCount(n);
+      }
+    }, 1000);
+    return () => clearInterval(id);
+  }, [phase]);
+
+  // Record a fixed window, then auto-stop and analyze.
+  useEffect(() => {
+    if (phase !== "recording") return;
+    bufferRef.current = [];
+    recordStartRef.current = performance.now();
+    recordingRef.current = true;
+    const id = setTimeout(finishRecording, RECORD_MS);
+    return () => clearTimeout(id);
+  }, [phase, finishRecording]);
+
+  // Manual override: jump straight into recording, or stop early.
+  const handleButton = useCallback(() => {
+    if (recordingRef.current) {
+      finishRecording();
+    } else if (capturableRef.current) {
+      setPhase("recording");
+    }
+  }, [finishRecording]);
+
+  const recording = phase === "recording";
   const recordDisabled = !ready || (!recording && !capturable);
 
   return (
@@ -192,11 +251,25 @@ export function CaptureView({ onCapture, className }: CaptureViewProps) {
           </span>
         )}
 
-        {ready && !capturable && !recording && (
+        {ready && !capturable && !recording && phase === "idle" && (
           <div className="pointer-events-none absolute inset-0 flex items-end justify-center p-6 pb-8">
             <p className="max-w-xs rounded-lg bg-black/80 px-4 py-3 text-center text-sm font-medium text-white">
-              Step back so your whole body is in frame. Stand side-on to the camera.
+              Step back so your whole body is in frame. Stand side-on to the
+              camera — recording starts on its own once you&apos;re set.
             </p>
+          </div>
+        )}
+
+        {phase === "countdown" && (
+          <div className="pointer-events-none absolute inset-0 grid place-items-center bg-black/30">
+            <div className="text-center">
+              <span className="block text-9xl font-bold leading-none text-white drop-shadow-[0_0_24px_rgba(0,0,0,0.7)]">
+                {count}
+              </span>
+              <span className="mt-2 block text-sm font-medium text-white/80">
+                Get ready to shoot…
+              </span>
+            </div>
           </div>
         )}
       </div>
@@ -207,10 +280,26 @@ export function CaptureView({ onCapture, className }: CaptureViewProps) {
         </p>
       )}
       <div className="mt-3 flex items-center gap-3">
-        <Button onClick={toggleRecording} disabled={recordDisabled} variant={recording ? "destructive" : "default"}>
-          {recording ? "Stop and analyze" : "Record a shot"}
+        <Button onClick={handleButton} disabled={recordDisabled} variant={recording ? "destructive" : "default"}>
+          {recording
+            ? "Stop and analyze"
+            : phase === "countdown"
+              ? "Starting…"
+              : "Record now"}
         </Button>
-        {!ready && !initError && <span className="text-sm text-muted-foreground">Starting camera…</span>}
+        {!ready && !initError && (
+          <span className="text-sm text-muted-foreground">Starting camera…</span>
+        )}
+        {ready && phase === "idle" && capturable && (
+          <span className="text-sm text-muted-foreground">
+            Good frame — auto-starting…
+          </span>
+        )}
+        {ready && phase === "idle" && !capturable && (
+          <span className="text-sm text-muted-foreground">
+            Get fully in frame and it records automatically
+          </span>
+        )}
       </div>
     </div>
   );

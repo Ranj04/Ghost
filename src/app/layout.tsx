@@ -3,6 +3,8 @@ import { Saira, Hanken_Grotesk, JetBrains_Mono } from "next/font/google";
 import Link from "next/link";
 import "./globals.css";
 
+import { AuthNav } from "./auth/auth-nav";
+
 // Distinctive trio: Saira (technical athletic display) for headers + stat
 // numbers, Hanken Grotesk (warm humanist) for prose, JetBrains Mono for every
 // measured number — the "instrument readout".
@@ -58,12 +60,7 @@ export default function RootLayout({
                 >
                   Battle
                 </Link>
-                <Link
-                  href="/auth"
-                  className="ml-1 rounded-full bg-[#2e86ff] px-3.5 py-2 font-medium text-[#04080f] transition hover:bg-[#1e6fe0]"
-                >
-                  Sign in
-                </Link>
+                <AuthNav />
               </nav>
             </div>
           </header>

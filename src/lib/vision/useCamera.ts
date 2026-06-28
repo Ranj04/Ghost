@@ -33,6 +33,9 @@ export function useCamera(): UseCamera {
         await videoRef.current.play();
       }
     } catch (e) {
+      // play() rejects with AbortError when the stream is torn down mid-init
+      // (e.g. React's dev double-mount) — that's benign, not a camera failure.
+      if (e instanceof DOMException && e.name === "AbortError") return;
       setError(e instanceof Error ? e.message : "Could not access the camera");
     }
   }, []);

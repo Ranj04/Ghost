@@ -10,7 +10,7 @@ export default async function AuthPage({
 }: {
   searchParams: Promise<{ next?: string }>;
 }) {
-  const { next = "/history" } = await searchParams;
+  const { next = "/capture" } = await searchParams;
   const configured = Boolean(
     process.env.NEXT_PUBLIC_INSFORGE_URL &&
       process.env.NEXT_PUBLIC_INSFORGE_ANON_KEY,

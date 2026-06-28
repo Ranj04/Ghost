@@ -6,7 +6,8 @@ import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import type { AnalysisResult, CoachingResult } from "@/lib/contracts";
-import { getPersistenceMode, saveSession } from "@/lib/db";
+import { getPersistenceMode, isInsForgeConfigured, saveSession } from "@/lib/db";
+import { saveSessionAction } from "@/lib/db/server";
 
 export function SaveSessionButton({
   analysis,
@@ -25,7 +26,11 @@ export function SaveSessionButton({
     setError(undefined);
 
     try {
-      await saveSession(analysis, coaching);
+      if (isInsForgeConfigured()) {
+        await saveSessionAction(analysis, coaching);
+      } else {
+        await saveSession(analysis, coaching);
+      }
       router.push("/history");
     } catch (caught) {
       if (caught instanceof Error && caught.message === "AUTH_REQUIRED") {

@@ -8,10 +8,12 @@ import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ProgressView } from "@/components/results";
 import {
+  isInsForgeConfigured,
   loadSessions,
   type GhostSession,
   type PersistenceMode,
 } from "@/lib/db";
+import { loadSessionsAction } from "@/lib/db/server";
 import { cn } from "@/lib/utils";
 
 import { signOut } from "../auth/actions";
@@ -29,7 +31,12 @@ export function HistoryDashboard() {
   useEffect(() => {
     let active = true;
 
-    loadSessions()
+    // InsForge auth lives in cookies the browser SDK can't refresh on a cold
+    // load, so read account history through a Server Action. Local-demo mode
+    // (no InsForge) still loads from localStorage on the client.
+    const load = isInsForgeConfigured() ? loadSessionsAction() : loadSessions();
+
+    load
       .then((result) => {
         if (active) setState(result);
       })

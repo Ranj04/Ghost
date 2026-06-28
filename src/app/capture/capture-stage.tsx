@@ -1,64 +1,103 @@
 "use client";
 
-import { Camera, ScanLine } from "lucide-react";
-import { useRouter } from "next/navigation";
-import type { ComponentType } from "react";
+import { useState } from "react";
+import { LoaderCircle } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
-import type { ShotCapture } from "@/lib/contracts";
+import { CaptureView } from "@/components/capture/CaptureView";
+import { GhostOverlay } from "@/components/overlay";
+import { ResultsView } from "@/components/results";
+import { mockShotCapture } from "@/lib/core";
+import type {
+  AnalysisResult,
+  CoachingResult,
+  ShotCapture,
+} from "@/lib/contracts";
 
-export interface CaptureViewProps {
-  onComplete: (capture: ShotCapture) => void;
-}
+import { SaveSessionButton } from "../results/save-session-button";
+import { analyzeAndCoach } from "./actions";
 
-export interface CaptureStageProps {
-  CaptureView?: ComponentType<CaptureViewProps>;
-}
+export function CaptureStage() {
+  const [analyzing, setAnalyzing] = useState(false);
+  const [analysis, setAnalysis] = useState<AnalysisResult | null>(null);
+  const [coaching, setCoaching] = useState<CoachingResult | null>(null);
+  const [error, setError] = useState<string>();
 
-function CapturePlaceholder({}: CaptureViewProps) {
-  const router = useRouter();
+  async function handleCapture(capture: ShotCapture) {
+    setAnalyzing(true);
+    setError(undefined);
+    try {
+      const result = await analyzeAndCoach(capture);
+      setAnalysis(result.analysis);
+      setCoaching(result.coaching);
+    } catch (caught) {
+      setError(
+        caught instanceof Error
+          ? caught.message
+          : "Could not analyze that shot. Try again.",
+      );
+    } finally {
+      setAnalyzing(false);
+    }
+  }
 
-  return (
-    <div className="relative grid min-h-[31rem] place-items-center overflow-hidden rounded-[2rem] border border-white/10 bg-[#080c14]">
-      <div className="capture-grid absolute inset-0 opacity-30" />
-      <div className="absolute left-6 top-6 flex items-center gap-2 rounded-full border border-white/10 bg-black/40 px-3 py-1.5 text-xs font-medium text-white/70 backdrop-blur">
-        <span className="size-2 rounded-full bg-[#2e86ff] shadow-[0_0_12px_#2e86ff]" />
-        Camera ready
-      </div>
-      <div className="absolute inset-x-[24%] inset-y-[12%] rounded-[45%_45%_25%_25%] border border-dashed border-[#2e86ff]/40" />
-      <div className="relative z-10 flex max-w-sm flex-col items-center px-8 text-center">
-        <div className="mb-6 grid size-16 place-items-center rounded-2xl border border-[#2e86ff]/20 bg-[#2e86ff]/10 text-[#2e86ff]">
-          <ScanLine className="size-8" />
+  function reset() {
+    setAnalysis(null);
+    setCoaching(null);
+    setError(undefined);
+  }
+
+  if (analysis && coaching) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <p className="eyebrow">Analysis complete</p>
+          <h2 className="mt-2 text-3xl font-semibold tracking-[-0.04em]">
+            Your shot, decoded.
+          </h2>
         </div>
-        <h2 className="text-2xl font-semibold tracking-tight text-white">
-          Capture view plugs in here
-        </h2>
-        <p className="mt-3 text-sm leading-6 text-white/55">
-          Stand side-on with your full body in frame. For now, run the sample
-          shot to preview the complete analysis flow.
-        </p>
-        <Button
-          className="mt-7 h-11 rounded-full bg-[#2e86ff] px-5 text-[#f4f1e8] hover:bg-[#5aa0ff]"
-          onClick={() => router.push("/results")}
+        <ResultsView
+          analysis={analysis}
+          coaching={coaching}
+          ghostOverlay={<GhostOverlay result={analysis} />}
+          saveAction={
+            <SaveSessionButton analysis={analysis} coaching={coaching} />
+          }
+        />
+        <button
+          className="text-sm text-muted-foreground underline hover:text-foreground"
+          onClick={reset}
+          type="button"
         >
-          <Camera data-icon="inline-start" />
-          Analyze sample shot
-        </Button>
+          Record another shot
+        </button>
       </div>
-    </div>
-  );
-}
+    );
+  }
 
-export function CaptureStage({
-  CaptureView = CapturePlaceholder,
-}: CaptureStageProps) {
-  const router = useRouter();
+  // While the server analyzes, unmount the camera so it can't auto-start a
+  // second countdown mid-request.
+  if (analyzing) {
+    return (
+      <div className="grid min-h-[31rem] place-items-center rounded-[2rem] border border-white/10 bg-[#080c14] text-white/70">
+        <p className="flex items-center gap-2 text-sm">
+          <LoaderCircle className="size-5 animate-spin" /> Analyzing your shot…
+        </p>
+      </div>
+    );
+  }
 
   return (
-    <CaptureView
-      onComplete={() => {
-        router.push("/results");
-      }}
-    />
+    <div>
+      <CaptureView onCapture={handleCapture} />
+      {error && <p className="mt-3 text-sm text-destructive">{error}</p>}
+      <button
+        className="mt-4 text-sm text-muted-foreground underline hover:text-foreground disabled:opacity-50"
+        onClick={() => handleCapture(mockShotCapture)}
+        disabled={analyzing}
+        type="button"
+      >
+        Camera not working? Analyze a sample shot instead
+      </button>
+    </div>
   );
 }
