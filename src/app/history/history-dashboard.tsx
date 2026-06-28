@@ -116,7 +116,7 @@ function EmptyState({
   linkLabel: string;
 }) {
   return (
-    <Card className="mx-auto mt-14 w-full max-w-2xl border-0 py-12 text-center ring-black/8">
+    <Card className="mx-auto mt-14 w-full max-w-2xl border-0 py-12 text-center ring-white/10">
       <CardContent className="flex flex-col items-center">
         <p className="eyebrow">Progress history</p>
         <h1 className="mt-3 text-3xl font-semibold tracking-[-0.04em]">
