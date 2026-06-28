@@ -22,7 +22,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import type { AnalysisResult } from "@/lib/contracts";
-import { mockShotCapture } from "@/lib/__mocks__/analyzeShot";
+import { mockShotCapture } from "@/lib/core";
 import {
   analyzeBattleShot,
   SettlementReceiptSchema,

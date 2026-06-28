@@ -1,5 +1,5 @@
 import { AnalysisResultSchema, type AnalyzeShot } from "@/lib/contracts";
-import { analyzeShot } from "@/lib/__mocks__/analyzeShot";
+import { analyzeShot } from "@/lib/core";
 
 /**
  * B4 demo analyzer. Both players go through this same function. The small,

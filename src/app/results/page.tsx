@@ -1,9 +1,5 @@
 import { ResultsView } from "@/components/results";
-import {
-  analyzeShot,
-  coachFlaw,
-  mockShotCapture,
-} from "@/lib/__mocks__/analyzeShot";
+import { analyzeShot, coachFlaw, mockShotCapture } from "@/lib/core";
 
 import { SaveSessionButton } from "./save-session-button";
 
