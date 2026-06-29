@@ -2,7 +2,7 @@
 // works for a live 33-point MediaPipe capture and the 13-name fixtures.
 //
 // Design: minimal "motion-capture at night." A faint blue IDEAL skeleton, your
-// crisp bone-white skeleton, and a basketball that arcs off the hand at release.
+// crisp bone-white skeleton, and a basketball in the shooting hand through release.
 // The motion (smooth auto-loop) + the ball is what reads as "a person shooting".
 import type { JointMetrics, PoseFrame } from "@/lib/contracts";
 import { isVisible } from "@/lib/vision/visibility";
@@ -102,7 +102,7 @@ function strokeSkeleton(ctx: CanvasRenderingContext2D, map: Map<string, PxPoint>
   }
 }
 
-/** Dark mocap stage: blue-black radial + faint blueprint grid + blue floor glow. */
+/** Dark mocap stage: blue-black radial + a very faint floor glow. */
 export function drawBackdrop(ctx: CanvasRenderingContext2D, w: number, h: number): void {
   const g = ctx.createRadialGradient(w * 0.5, h * 0.4, Math.min(w, h) * 0.05, w * 0.5, h * 0.55, Math.max(w, h) * 0.85);
   g.addColorStop(0, "#0E1830");
@@ -111,29 +111,11 @@ export function drawBackdrop(ctx: CanvasRenderingContext2D, w: number, h: number
   ctx.fillStyle = g;
   ctx.fillRect(0, 0, w, h);
 
-  ctx.save();
-  ctx.strokeStyle = `rgba(${GHOST_RGB}, 0.045)`;
-  ctx.lineWidth = 1;
-  const step = Math.max(30, Math.round(Math.min(w, h) / 12));
-  for (let x = step; x < w; x += step) {
-    ctx.beginPath();
-    ctx.moveTo(x, 0);
-    ctx.lineTo(x, h);
-    ctx.stroke();
-  }
-  for (let y = step; y < h; y += step) {
-    ctx.beginPath();
-    ctx.moveTo(0, y);
-    ctx.lineTo(w, y);
-    ctx.stroke();
-  }
-  ctx.restore();
-
-  const floor = ctx.createRadialGradient(w * 0.5, h * 0.93, 4, w * 0.5, h * 0.93, w * 0.5);
-  floor.addColorStop(0, `rgba(${GHOST_RGB}, 0.13)`);
+  const floor = ctx.createRadialGradient(w * 0.5, h * 0.93, 4, w * 0.5, h * 0.93, w * 0.45);
+  floor.addColorStop(0, `rgba(${GHOST_RGB}, 0.08)`);
   floor.addColorStop(1, `rgba(${GHOST_RGB}, 0)`);
   ctx.fillStyle = floor;
-  ctx.fillRect(0, h * 0.66, w, h * 0.34);
+  ctx.fillRect(0, h * 0.72, w, h * 0.28);
 }
 
 export function drawVignette(ctx: CanvasRenderingContext2D, w: number, h: number): void {
@@ -223,74 +205,6 @@ export function drawBall(ctx: CanvasRenderingContext2D, x: number, y: number, r:
   ctx.beginPath();
   ctx.ellipse(0, 0, r * 0.42, r, 0, 0, Math.PI * 2);
   ctx.stroke();
-  ctx.restore();
-}
-
-/** A holographic hoop: glowing blue rim + a minimal net cone, with a swish ripple
- *  on the make. (x,y = rim center, r = rim radius, swish 0..1 = make ripple.) */
-export function drawHoop(ctx: CanvasRenderingContext2D, x: number, y: number, r: number, swish = 0): void {
-  const rimY = r * 0.34;
-  const netDepth = r * 1.3;
-  const bottomR = r * 0.42;
-  ctx.save();
-  ctx.lineCap = "round";
-
-  // Net cone.
-  ctx.strokeStyle = `rgba(${GHOST_RGB}, 0.3)`;
-  ctx.lineWidth = Math.max(1, r * 0.05);
-  const segs = 8;
-  for (let i = 0; i <= segs; i++) {
-    const f = i / segs;
-    ctx.beginPath();
-    ctx.moveTo(x - r + 2 * r * f, y);
-    ctx.lineTo(x - bottomR + 2 * bottomR * f, y + netDepth);
-    ctx.stroke();
-  }
-  for (const d of [0.5, 1]) {
-    ctx.beginPath();
-    ctx.ellipse(x, y + netDepth * d, r - (r - bottomR) * d, rimY * (1 - d * 0.4), 0, 0, Math.PI * 2);
-    ctx.stroke();
-  }
-
-  // Rim.
-  ctx.strokeStyle = GHOST;
-  ctx.shadowColor = GHOST;
-  ctx.shadowBlur = 12;
-  ctx.lineWidth = Math.max(2.5, r * 0.16);
-  ctx.beginPath();
-  ctx.ellipse(x, y, r, rimY, 0, 0, Math.PI * 2);
-  ctx.stroke();
-
-  // Swish ripple expanding off the rim on the make.
-  if (swish > 0 && swish < 1) {
-    const e = 1 + swish * 0.85;
-    ctx.globalAlpha = (1 - swish) * 0.7;
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.ellipse(x, y, r * e, rimY * e, 0, 0, Math.PI * 2);
-    ctx.stroke();
-  }
-  ctx.restore();
-}
-
-/** A glowing shot-arc tracer along the ball's flight path (px points, tail→head
- *  fades in). Reads as "shot tracking" — instrument blue. */
-export function drawShotArc(ctx: CanvasRenderingContext2D, pts: { x: number; y: number }[]): void {
-  if (pts.length < 2) return;
-  ctx.save();
-  ctx.lineCap = "round";
-  ctx.shadowColor = GHOST;
-  ctx.shadowBlur = 8;
-  ctx.strokeStyle = GHOST;
-  for (let i = 1; i < pts.length; i++) {
-    const f = i / (pts.length - 1);
-    ctx.globalAlpha = 0.06 + 0.5 * f;
-    ctx.lineWidth = 1.2 + 2.4 * f;
-    ctx.beginPath();
-    ctx.moveTo(pts[i - 1].x, pts[i - 1].y);
-    ctx.lineTo(pts[i].x, pts[i].y);
-    ctx.stroke();
-  }
   ctx.restore();
 }
 
