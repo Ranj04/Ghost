@@ -1,13 +1,6 @@
-import { ResultsView } from "@/components/results";
-import { GhostOverlay } from "@/components/overlay";
-import { analyzeShot, coachFlaw, mockShotCapture } from "@/lib/core";
+import { ResultsClient } from "./results-client";
 
-import { SaveSessionButton } from "./save-session-button";
-
-export default async function ResultsPage() {
-  const analysis = await analyzeShot(mockShotCapture);
-  const coaching = await coachFlaw(analysis.topFlaw);
-
+export default function ResultsPage() {
   return (
     <main className="mx-auto w-full max-w-6xl flex-1 px-5 py-10 sm:px-8 lg:py-14">
       <div className="mb-8">
@@ -16,14 +9,7 @@ export default async function ResultsPage() {
           Your shot, decoded.
         </h1>
       </div>
-      <ResultsView
-        analysis={analysis}
-        coaching={coaching}
-        ghostOverlay={<GhostOverlay result={analysis} />}
-        saveAction={
-          <SaveSessionButton analysis={analysis} coaching={coaching} />
-        }
-      />
+      <ResultsClient />
     </main>
   );
 }
