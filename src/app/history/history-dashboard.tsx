@@ -86,9 +86,9 @@ export function HistoryDashboard() {
   if (state.sessions.length === 0) {
     return (
       <EmptyState
-        body="Complete a shot analysis and save it to start your score trend."
-        href="/results"
-        linkLabel="Analyze the sample shot"
+        body="Film a shot and save the analysis to start your score trend."
+        href="/capture"
+        linkLabel="Record your first shot"
         title="No sessions yet."
       />
     );
