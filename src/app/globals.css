@@ -182,3 +182,16 @@
     opacity: 0.9;
   }
 }
+
+/* Respect reduced-motion: kill CSS animations + transitions (scan line, pulse
+   dots, spinners). The canvas overlay separately holds a static frame. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}

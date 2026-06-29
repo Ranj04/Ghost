@@ -195,6 +195,15 @@ export function GhostOverlay({ result, width = 440, height = 560, className, com
       }
       draw(posRef.current, now);
     };
+    // Reduced motion: no animation loop — render a single legible frame once
+    // (the release pose, where the flaw reads most clearly).
+    if (reduced) {
+      raf = requestAnimationFrame((now) => {
+        setIndex(releaseIndex);
+        draw(releaseIndex, now);
+      });
+      return () => cancelAnimationFrame(raf);
+    }
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
   }, [result, frames, ghostFrames, total, fps, releaseIndex, flawKeys, flawJoint, shootWrist, fit, width, height]);
