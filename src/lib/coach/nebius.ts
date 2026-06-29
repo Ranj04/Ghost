@@ -4,7 +4,10 @@
 import type { Drill, Flaw, Reference } from "../contracts";
 
 const DEFAULT_BASE_URL = "https://api.tokenfactory.nebius.com/v1/";
-const DEFAULT_MODEL = "Qwen/Qwen2.5-32B-Instruct";
+// Must be a model the configured Nebius endpoint actually serves — the old
+// Qwen2.5-32B id 404s on Token Factory. Llama-3.3-70B is available and follows
+// the "use only these numbers" grounding instruction cleanly.
+const DEFAULT_MODEL = "meta-llama/Llama-3.3-70B-Instruct";
 
 export function hasNebiusKey(): boolean {
   return Boolean(process.env.NEBIUS_API_KEY);
