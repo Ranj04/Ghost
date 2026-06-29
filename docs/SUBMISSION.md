@@ -3,7 +3,7 @@
 ## Project
 
 - **Track:** Sports Arena
-- **Live demo:** <https://ghost-form-coach.vercel.app>
+- **Live demo:** <https://ghost-lemon-phi.vercel.app>
 - **Repository:** <https://github.com/Ranj04/Ghost>
 - **FinChip asset:** `src/lib/finchip/ghost-shot-coach/`
 - **FinChip slug:** `ghost-shot-coach_finchip`
